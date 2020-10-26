@@ -10,6 +10,7 @@
     "@testing-library/user-event": "^7.1.2",
     "axios": "^0.19.2",
     "bootstrap": "^4.4.1",
+    "firebase": "^8.0.0",
     "local-storage": "^2.0.0",
     "moment": "^2.29.1",
     "react": "^16.12.0",
