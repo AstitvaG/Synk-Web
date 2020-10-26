@@ -272,7 +272,7 @@ export default class Main extends Component {
                 </button>}
             </div>
             <div style={{visibility:this.state.drag>0?"hidden":"visible"}}>
-                <button className={`btn-show-right-area`} onClick={(e)=>{this.setState({drag:true})}}>
+                <button className={`btn-show-right-area`} onClick={(e)=>{this.setState({showRight:true})}}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-chevron-left">
                         <polyline points="15 18 9 12 15 6" />
                     </svg>

@@ -27,39 +27,42 @@ function getOS() {
   return os;
 }
 
+function isMobile() {
+  if (['Android', 'iOS'].indexOf(getOS()) !== -1) return true;
+  else return false;
+}
 // export default App;
 
 export default class App extends Component {
   constructor(props) {
     super(props)
     this.state = {
-
     }
   }
-  componentDidMount() {
-    const messaging = firebase.messaging()
-    messaging.requestPermission().then(() => {
-      return messaging.getToken()
-    }).then(token => {
-      console.log('Token : ', token)
-    }).catch((err) => {
-      console.log(err);
-
-    })
-    // messaging.onMessage((payload)=>{
-    //   console.log(payload);
-
-    // })
+  componentDidMount = async () => {
+    if (isMobile()) return
+    else {
+      const messaging = firebase.messaging()
+      messaging.requestPermission().then(() => {
+        return messaging.getToken()
+      }).then(token => {
+        console.log('Token : ', token)
+      }).catch((err) => {
+        console.log(err);
+      })
+    }
   }
   render() {
     return (
       <Router>
         {localStorage.setItem('userOs', getOS())}
-        <div className="container-fluid">
-          <Route path="/auth" component={Auth} />
-          <Route path="/" exact component={Main} />
-          <Route path="/home" component={Main} />
-        </div>
+        { isMobile()
+          ? <div>Download the app to continue</div>
+          : <div className="container-fluid">
+            <Route path="/auth" component={Auth} />
+            <Route path="/" exact component={Main} />
+          </div>
+        }
       </Router>
     )
   }
