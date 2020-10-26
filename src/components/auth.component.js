@@ -46,7 +46,8 @@ export default class Auth extends Component {
     validateEmail = () => {
         const { email } = this.state;
         this.setState({
-            emailError: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email) 
+            emailError: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email) 
+            // emailError: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email) 
             ? null : 'Email must be of valid type'
         });
     }
@@ -103,6 +104,7 @@ export default class Auth extends Component {
                 signupBtn.parentNode.classList.add('slide-up')
                 parent.classList.remove('slide-up')
             }
+            return null
         });
     }
 
@@ -117,6 +119,7 @@ export default class Auth extends Component {
                 loginBtn.parentNode.parentNode.classList.add('slide-up')
                 parent.classList.remove('slide-up')
             }
+            return null
         });
     }
 

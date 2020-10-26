@@ -1,10 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Route } from "react-router-dom";
 
-import Upload from './components/upload.component'
 import Auth from  './components/auth.component'
 import Main from  './components/main.component'
-import ListState from  './components/list.component'
 
 
 
@@ -59,9 +57,8 @@ function App() {
       {localStorage.setItem('userOs',getOS())}
       <div className="container-fluid">
         <Route path="/auth" component={Auth}/>
-        <Route path="/" exact component={Upload}/>
+        <Route path="/" exact component={Main}/>
         <Route path="/home" component={Main}/>
-        <Route path="/list" component={ListState}/>
       </div>
     </Router>
   );

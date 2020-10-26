@@ -145,9 +145,9 @@ export default class Main extends Component {
         )
     }
 
-    renderDownloadCard = (item) => {
+    renderDownloadCard = (item,i,j) => {
         return (
-            <div className="download-area">
+            <div className="download-area" key={"file-"+i+"-"+j} onDoubleClick={()=> window.open("https://web.synk.tools/file/render/"+item.filename, "_blank")}>
                 <div className="download-item-icon">
                     {this.renderFileIcon(this.fileType(item.name || item.originalName))}
                 </div>
@@ -156,12 +156,14 @@ export default class Main extends Component {
                     <p className="download-text-info">{item.caption}<span>{moment(item.createdAt).format("h:mm A")}</span></p>
                     <p className="download-text-info">To {item.recieverName}<span><i className="fab fa-android"></i></span></p>
                 </div>
-                <div className="download-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 612">
-                        <defs />
-                        <path d="M403.939 295.749l-78.814 78.833V172.125c0-10.557-8.568-19.125-19.125-19.125s-19.125 8.568-19.125 19.125v202.457l-78.814-78.814c-7.478-7.478-19.584-7.478-27.043 0-7.478 7.478-7.478 19.584 0 27.042L289.208 431c4.59 4.59 10.863 6.005 16.812 4.953 5.929 1.052 12.221-.382 16.811-4.953l108.19-108.19c7.478-7.478 7.478-19.583 0-27.042-7.498-7.478-19.604-7.478-27.082-.019zM306 0C137.012 0 0 136.992 0 306s137.012 306 306 306 306-137.012 306-306S475.008 0 306 0zm0 573.75C158.125 573.75 38.25 453.875 38.25 306S158.125 38.25 306 38.25 573.75 158.125 573.75 306 453.875 573.75 306 573.75z" /> 
-                    </svg>
-                </div>
+                <a href={"https://web.synk.tools/file/download/"+item.filename} download={item.originalName}>
+                    <div className="download-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 612">
+                            <defs />
+                            <path d="M403.939 295.749l-78.814 78.833V172.125c0-10.557-8.568-19.125-19.125-19.125s-19.125 8.568-19.125 19.125v202.457l-78.814-78.814c-7.478-7.478-19.584-7.478-27.043 0-7.478 7.478-7.478 19.584 0 27.042L289.208 431c4.59 4.59 10.863 6.005 16.812 4.953 5.929 1.052 12.221-.382 16.811-4.953l108.19-108.19c7.478-7.478 7.478-19.583 0-27.042-7.498-7.478-19.604-7.478-27.082-.019zM306 0C137.012 0 0 136.992 0 306s137.012 306 306 306 306-137.012 306-306S475.008 0 306 0zm0 573.75C158.125 573.75 38.25 453.875 38.25 306S158.125 38.25 306 38.25 573.75 158.125 573.75 306 453.875 573.75 306 573.75z" /> 
+                        </svg>
+                    </div>
+                </a>
             </div>
         )
     }
@@ -170,7 +172,7 @@ export default class Main extends Component {
         return(
             <div className={`left-area ${this.state.showLeft ? 'show' : ''}`}>
                 <button className="btn-close-left" onClick={(e)=>{this.setState({showLeft:false})}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" className="feather feather-x-circle" viewBox="0 0 24 24">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-x-circle" viewBox="0 0 24 24">
                         <defs />
                         <circle cx="12" cy="12" r="10" />
                         <path d="M15 9l-6 6M9 9l6 6" />
@@ -178,32 +180,32 @@ export default class Main extends Component {
                 </button>
                 <div className="app-name">Synk</div>
                 <a href="#" className={`item-link ${this.state.activeTab===1 ? 'active' : ''}`} id="pageLink" onClick={(e)=>{this.setState({activeTab:1})}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" className="feather feather-grid" viewBox="0 0 24 24">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-grid" viewBox="0 0 24 24">
                         <defs />
                         <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
                     </svg>
                 </a>
                 <a href="#" className={`item-link ${this.state.activeTab===2 ? 'active' : ''}`} id="pageLink" onClick={(e)=>{this.setState({activeTab:2})}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" className="feather feather-folder" viewBox="0 0 24 24">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-folder" viewBox="0 0 24 24">
                         <defs />
                         <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
                     </svg>
                 </a>
                 <a href="#" className={`item-link ${this.state.activeTab===3 ? 'active' : ''}`} id="pageLink" onClick={(e)=>{this.setState({activeTab:3})}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" className="feather feather-hard-drive" viewBox="0 0 24 24">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-hard-drive" viewBox="0 0 24 24">
                         <defs />
                         <path d="M22 12H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11zM6 16h.01M10 16h.01" />
                     </svg>
                 </a>
                 <a href="#" className={`item-link ${this.state.activeTab===4 ? 'active' : ''}`} id="pageLink" onClick={(e)=>{this.setState({activeTab:4})}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" className="feather feather-settings" viewBox="0 0 24 24">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-settings" viewBox="0 0 24 24">
                         <defs />
                         <circle cx="12" cy="12" r="3" />
                         <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
                     </svg>
                 </a>
                 <button className="btn-logout">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" className="feather feather-log-out" viewBox="0 0 24 24">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-log-out" viewBox="0 0 24 24">
                         <defs />
                         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /> </svg>
                 </button>
@@ -271,12 +273,12 @@ export default class Main extends Component {
             </div>
             <div style={{visibility:this.state.drag>0?"hidden":"visible"}}>
                 <button className={`btn-show-right-area`} onClick={(e)=>{this.setState({drag:true})}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="feather feather-chevron-left">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-chevron-left">
                         <polyline points="15 18 9 12 15 6" />
                     </svg>
                 </button>
                 <button className={`btn-show-left-area`} onClick={(e)=>{this.setState({showLeft:true})}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <line x1="3" y1="12" x2="21" y2="12" />
                         <line x1="3" y1="6" x2="21" y2="6" />
                         <line x1="3" y1="18" x2="21" y2="18" />
@@ -285,7 +287,7 @@ export default class Main extends Component {
                 <div className={`main-area-header`}>
                     <div className="search-wrapper" id="searchLine">
                         <input className="search-input" type="text" placeholder="e.g. files.doc" />
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" className="feather feather-search" viewBox="0 0 24 24">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-search" viewBox="0 0 24 24">
                             <defs />
                             <circle cx="11" cy="11" r="8" />
                             <path d="M21 21l-4.35-4.35" /> </svg>
@@ -296,26 +298,26 @@ export default class Main extends Component {
                     <div className="access-links">
                         {/* Images */}     <div className="access-link-wrapper">
                             <div className="access-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" className="feather feather-image">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-image">
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                     <circle cx="8.5" cy="8.5" r="1.5" />
                                     <polyline points="21 15 16 10 5 21" /> </svg>
                             </div> <span className="access-text">Images</span> </div>
                         {/* Music */}      <div className="access-link-wrapper">
                             <div className="access-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" className="feather feather-music">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-music">
                                     <path d="M9 18V5l12-2v13" />
                                     <circle cx="6" cy="18" r="3" />
                                     <circle cx="18" cy="16" r="3" /> </svg>
                             </div> <span className="access-text">Music</span> </div>
                         {/* Video */}      <div className="access-link-wrapper">
                             <div className="access-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" className="feather feather-play">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-play">
                                     <polygon points="5 3 19 12 5 21 5 3" /> </svg>
                             </div> <span className="access-text">Video</span> </div>
                         {/* Docs */}       <div className="access-link-wrapper">
                             <div className="access-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" className="feather feather-align-left">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-align-left">
                                     <line x1="17" y1="10" x2="3" y2="10" />
                                     <line x1="21" y1="6" x2="3" y2="6" />
                                     <line x1="21" y1="14" x2="3" y2="14" />
@@ -323,14 +325,14 @@ export default class Main extends Component {
                             </div> <span className="access-text">Docs</span> </div>
                         {/* Apps */}       <div className="access-link-wrapper">
                             <div className="access-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" className="feather feather-layers">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-layers">
                                     <polygon points="12 2 2 7 12 12 22 7 12 2" />
                                     <polyline points="2 17 12 22 22 17" />
                                     <polyline points="2 12 12 17 22 12" /> </svg>
                             </div> <span className="access-text">Apps</span> </div>
                         {/* Download */}   <div className="access-link-wrapper">
                             <div className="access-icon">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" className="feather feather-arrow-down-circle">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-arrow-down-circle">
                                     <circle cx="12" cy="12" r="10" />
                                     <polyline points="8 12 12 16 16 12" />
                                     <line x1="12" y1="8" x2="12" y2="16" /> </svg>
@@ -423,7 +425,7 @@ export default class Main extends Component {
         return (
             <div className={`right-area ${this.state.showRight ? 'show' : ''}`}>
                 <button className="btn-close-right" onClick={(e)=>{this.setState({showRight:false})}}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" className="feather feather-x-circle" viewBox="0 0 24 24">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-x-circle" viewBox="0 0 24 24">
                         <defs />
                         <circle cx="12" cy="12" r="10" />
                         <path d="M15 9l-6 6M9 9l6 6" /> </svg>
@@ -451,16 +453,16 @@ export default class Main extends Component {
                         <div className="download-item-line">
                             <div className="line-header">Uploaded Just Now</div>
                             {
-                                this.state.uploadArray.map((file) => (file.done===100 && this.renderDownloadCard(file)))
+                                this.state.uploadArray.map((file,i) => (file.done===100 && this.renderDownloadCard(file,0,i)))
                             }
                         </div>
                     </div>}
-                    {this.state.datewiseGrouped.map((partday) => (
-                        <div>
+                    {this.state.datewiseGrouped.map((partday,i) => (
+                        <div key={i}>
                             <div className="download-item-line">
                                 <div className="line-header">{this.parseDate(partday[0].createdAt)}</div>
                                 {
-                                    partday.map((file) => (this.renderDownloadCard(file)))
+                                    partday.map((file,j) => (this.renderDownloadCard(file,i,j)))
                                 }
                             </div>
                         </div>
@@ -631,8 +633,8 @@ export default class Main extends Component {
     render() {
         var datesDone = []
         return (
-            <div unselectable="on">
-                <div className="app-container">
+            <div>
+                <div className="app-container unselectable">
                     {this.renderLeft()}
                     {this.renderCenter()}
                     {this.renderRight()}
