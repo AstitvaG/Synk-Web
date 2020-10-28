@@ -43,7 +43,7 @@ export default class Main extends Component {
                 $('div.main-area-header').removeClass('fixed');
             }
         });
-        axios.get('http://localhost:7000/file/recent/25',{params: {username: this.state.user.username}})
+        axios.get('https://web.synk.tools/file/recent/25',{params: {username: this.state.user.username}})
             .then(response => {
                 this.setState({ fileList: response.data.files });
                 this.groupFiles(response.data.files)
@@ -609,7 +609,7 @@ export default class Main extends Component {
             formData.append('recieverName', this.state.user.username);
             formData.append('senderName', "Website");
             formData.append('file', tempArray[i]);
-            axios.post('http://localhost:7000/file/', formData, {
+            axios.post('https://web.synk.tools/file/', formData, {
                 onUploadProgress: (e) => {
                     const percent = Math.floor((e.loaded / e.total) * 100);
                     console.log("Upload", i, percent)
