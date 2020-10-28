@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import './auth.component.css';
+import { setUserSession } from '../utils/common';
 // import ls from 'local-storage'
 
 
@@ -9,6 +10,7 @@ export default class Auth extends Component {
     constructor(props) {
         super(props);
         this.state = {
+            loading: false,
             username: '',
             email: '',
             password: '',
@@ -23,19 +25,19 @@ export default class Auth extends Component {
     }
 
     onChangeUsername = event => {
-        this.setState({ username: event.target.value }, () => {this.validateUsername();});
+        this.setState({ username: event.target.value }, () => { this.validateUsername(); });
     }
 
-    
+
     onChangeEmail = event => {
-        this.setState({ email: event.target.value }, () => {this.validateEmail();});
+        this.setState({ email: event.target.value }, () => { this.validateEmail(); });
     }
-    
-    
+
+
     onChangePassword = event => {
-        this.setState({ password: event.target.value }, () => {this.validatePass();});
+        this.setState({ password: event.target.value }, () => { this.validatePass(); });
     }
-    
+
     validateUsername = () => {
         const { username } = this.state;
         this.setState({
@@ -46,51 +48,60 @@ export default class Auth extends Component {
     validateEmail = () => {
         const { email } = this.state;
         this.setState({
-            emailError: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email) 
-            // emailError: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email) 
-            ? null : 'Email must be of valid type'
+            emailError: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
+                // emailError: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email) 
+                ? null : 'Email must be of valid type'
         });
     }
-    
+
     validatePass = () => {
         const { password } = this.state;
         this.setState({
-            passError: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password) 
-            ? null : 'Minimum eight characters are required, at least one letter and one number'
+            passError: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)
+                ? null : 'Minimum eight characters are required, at least one letter and one number'
         });
     }
 
     onSignup = () => {
-        var {emailError,nameError,passError} = this.state
+        console.log("Trying to signup....")
+        var { emailError, nameError, passError } = this.state
         if (emailError || nameError || passError) return;
         const newUser = {
             username: this.state.username,
             email: this.state.email,
             password: this.state.password,
         }
-        axios.post('https://web.synk.tools/login/add', newUser)
+        this.setState({ loading: true })
+        axios.post('https://web.synk.tools/auth/signup', newUser)
             .then(res => {
-                console.log('done')
-                localStorage.setItem('userId', res.data.user.id);
-                localStorage.setItem('username', res.data.user.name);
-                localStorage.setItem('isLoggedIn', true);
-                this.props.history.push('/search/')
-            });
+                console.log("Signup")
+                this.setState({ loading: false })
+                setUserSession(res.data.token, res.data.user)
+                this.props.history.push('/')
+            })
+            .catch(err => {
+                this.setState({ loading: false })
+                console.log(err)
+            })
     }
 
     onLogin = () => {
-        var {emailError,nameError,passError} = this.state
-        if (emailError || nameError || passError) return;
+        // var { emailError, nameError, passError } = this.state
+        // if (emailError || nameErro || passError) return;
         var loginDetails = {
             username: this.state.username,
             password: this.state.password
         }
-        axios.post('https://web.synk.tools/login/existing', loginDetails)
+        this.setState({ loading: true })
+        axios.post('https://web.synk.tools/auth/login', loginDetails)
             .then(res => {
-                localStorage.setItem('userId', res.data.user.id);
-                localStorage.setItem('username', res.data.user.name);
-                localStorage.setItem('isLoggedIn', true);
-                this.props.history.push('/search/')
+                this.setState({ loading: false })
+                setUserSession(res.data.token, res.data.user)
+                this.props.history.push('/')
+            })
+            .catch(err => {
+                this.setState({ loading: false })
+                console.log(err)
             })
     }
 
@@ -129,57 +140,57 @@ export default class Auth extends Component {
                 <div className="form-structor">
                     <div className="signup">
                         <h2 className="form-title" id="signup" onClick={this.onGoToSignup}><span>or</span>Sign up</h2>
-                        <form onSubmit={this.onSignup}>
+                        <div>
                             <div className="form-holder">
                                 <input type="text" required placeholder="Name"
                                     className={`input ${this.state.nameError ? 'is-invalid' : ''}`}
                                     value={this.state.username}
                                     onChange={this.onChangeUsername}
                                     onBlur={this.validateName} />
-                                    {
-                                        this.state.nameError
-                                        ?this.state.username?<i className="fas fa-exclamation" style={{color:"grey",position:"absolute",right:15,marginTop:10}}></i>:""
-                                        :<i className="fas fa-check" style={{color:"green",position:"absolute",right:15,marginTop:10}}></i>
-                                    }
+                                {
+                                    this.state.nameError
+                                        ? this.state.username ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                        : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                }
                                 <input type="email" required placeholder="Email"
                                     className={`input ${this.state.emailError ? 'is-invalid' : ''}`}
                                     value={this.state.email}
                                     onChange={this.onChangeEmail}
                                     onBlur={this.validateEmail} />
-                                    {
-                                        this.state.emailError
-                                        ?this.state.email?<i className="fas fa-exclamation" style={{color:"grey",position:"absolute",right:15,marginTop:10}}></i>:""
-                                        :<i className="fas fa-check" style={{color:"green",position:"absolute",right:15,marginTop:10}}></i>
-                                    }
+                                {
+                                    this.state.emailError
+                                        ? this.state.email ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                        : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                }
                                 <input type="password" required placeholder="Password"
                                     className={`input ${this.state.passError ? 'is-invalid' : ''}`}
                                     value={this.state.password}
                                     onChange={this.onChangePassword}
                                     onBlur={this.validatePass} />
-                                    {
-                                        this.state.passError
-                                        ?this.state.password?<i className="fas fa-exclamation" style={{color:"grey",position:"absolute",right:15,marginTop:10}}></i>:""
-                                        :<i className="fas fa-check" style={{color:"green",position:"absolute",right:15,marginTop:10}}></i>
-                                    }
+                                {
+                                    this.state.passError
+                                        ? this.state.password ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                        : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                }
                             </div>
-                            <button type="submit" onClick={this.onSignup} className="submit-btn">Sign up</button>
-                        </form>
+                            <button onClick={this.onSignup} className="submit-btn">Sign up</button>
+                        </div>
                     </div>
                     <div className="login slide-up">
                         <div className="center">
                             <h2 className="form-title" id="login" onClick={this.onGoToLogin}><span>or</span>Log in</h2>
-                            <form onSubmit={this.onLogin}>
+                            <div>
                                 <div className="form-holder">
                                     <input type="text" required placeholder="Name"
                                         className={`input ${this.state.nameError ? 'is-invalid' : ''}`}
                                         value={this.state.username}
                                         onChange={this.onChangeUsername}
                                         onBlur={this.validateName} />
-                                        {
-                                            this.state.nameError
-                                            ?this.state.username?<i className="fas fa-exclamation" style={{color:"grey",position:"absolute",right:15,marginTop:10}}></i>:""
-                                            :<i className="fas fa-check" style={{color:"green",position:"absolute",right:15,marginTop:10}}></i>
-                                        }
+                                    {
+                                        this.state.nameError
+                                            ? this.state.username ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                            : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                    }
                                     <input type="password" required placeholder="Password"
                                         className={`input ${this.state.passError ? 'is-invalid' : ''}`}
                                         value={this.state.password}
@@ -187,7 +198,7 @@ export default class Auth extends Component {
                                         onBlur={this.validatePass} />
                                 </div>
                                 <button onClick={this.onLogin} className="submit-btn">Log in</button>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
