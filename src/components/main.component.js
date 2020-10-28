@@ -6,6 +6,7 @@ import $ from 'jquery';
 import moment from 'moment';
 import { getUser, removeUserSession } from '../utils/common';
 import ClipLoader from "react-spinners/ClipLoader";
+import firebase from '../firebase'
 
 export default class Main extends Component {
 
@@ -29,12 +30,14 @@ export default class Main extends Component {
             closeIcon: -1,
             uploadArray: [],
             countDone: 0,
+            deviceList: [],
+            deviceLoading: true,
+            deviceSected: '',
         }
     }
 
-
     componentDidMount() {
-        console.log(this.state.user)
+        this.registerPushMessaging()
         $('.main-area').scroll(function () {
             if ($('.main-area').scrollTop() >= 88) {
                 $('div.main-area-header').addClass('fixed');
@@ -49,7 +52,37 @@ export default class Main extends Component {
                 this.groupFiles(response.data.files)
             })
             .catch(err => alert(err));
+    }
 
+    registerPushMessaging = () => {
+        const messaging = firebase.messaging()
+		Notification.requestPermission().then(() => {
+			return messaging.getToken()
+		}).then(token => {
+            console.log('Token : ', token)
+            axios.post('https://web.synk.tools/device/add',{
+                username: this.state.user.username,
+                token: token,
+                deviceName: "Website",
+                platform: 2
+            })
+            .then(res => {
+                this.setState({ deviceList: res.data.devices });
+                this.getDeviceList()
+            })
+            .catch(err => console.log(err));
+		}).catch((err) => {
+			console.log(err);
+		})
+    }
+
+    getDeviceList = () => {
+        axios.post('https://web.synk.tools/device/',{username: this.state.user.username})
+            .then(res => {
+                this.setState({ deviceList: res.data.devices,deviceLoading:false, deviceSected: res.data.devices[0] });
+                console.log(res.data.devices)
+            })
+            .catch(err => alert(err));
     }
 
     groupFiles = (arr) => {
@@ -98,7 +131,10 @@ export default class Main extends Component {
         else if (['ppt', 'pptx'].includes(ext)) return 5
         else if (['sh', 'tex', 'py', 'java', 'c', 'cpp', 'js', 'html', 'css'].includes(ext)) return 6
         else if (['webm', 'mpg', 'mp2', 'mpeg', 'mpe', 'mpv', 'ogg', 'mp4', 'm4p', 'm4v', 'avi', 'wmv', 'mov', 'qt', 'flv', 'swf', 'avchd'].includes(ext)) return 7
-        else if (ext == "close-icon") return 8
+        else if (ext === "close-icon") return 8
+        else if (ext === "Website") return 9
+        else if (ext === "Android") return 10
+        else if (ext === "iOS") return 11
         else return 0
     }
 
@@ -129,6 +165,15 @@ export default class Main extends Component {
             case 8:
                 col = '#22244a', ico = "fas fa-times"
                 break
+            case 9:
+                col = '#dd4b25', ico = "fas fa-code"
+                break
+            case 10:
+                col = '#30dd81', ico = "fab fa-android"
+                break
+            case 11:
+                col = '#000000', ico = "fab fa-apple"
+                break
             default:
                 col = '#555555', ico = "far fa-file-archive"
         }
@@ -141,7 +186,7 @@ export default class Main extends Component {
 
     renderUploadCard = (item, idx) => {
         return (
-            <div className="download-area">
+            <div className="download-area" key={idx}>
                 <div className="download-item-icon">
                     {this.renderFileIcon((item.name || item.originalName).split('.').pop().toLowerCase())}
                 </div>
@@ -219,7 +264,7 @@ export default class Main extends Component {
                         <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
                     </svg>
                 </a>
-                <button className="btn-logout">
+                <button className="btn-logout" onClick={this.onLogout}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-log-out" viewBox="0 0 24 24">
                         <defs />
                         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /> </svg>
@@ -255,28 +300,49 @@ export default class Main extends Component {
                     <div className="file-display-container">
                         {
                             this.state.selectedFiles.map((data, i) =>
-                                <div class="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: "white" }}
+                                <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: "white" }}
                                     onMouseEnter={() => this.setState({ closeIcon: i })}
                                     onMouseLeave={() => this.setState({ closeIcon: -1 })}
                                     onClick={() => this.removeFile(data.name)}>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="d-flex justify-content-between align-items-center">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <div className="d-flex justify-content-between align-items-center">
                                             {this.state.closeIcon != i
                                                 ? this.renderFileIcon(this.fileType(data.name), 50)
                                                 : this.renderFileIcon("close-icon", 50)
                                             }
-                                            <div class="mb-3 mb-sm-0 ml-3">
-                                                <p class="font-weight-bold mb-0 text-truncate"
+                                            <div className="mb-3 mb-sm-0 ml-3">
+                                                <p className="font-weight-bold mb-0 text-truncate"
                                                     style={{ maxWidth: "240px" }}>{data.name}</p>
-                                                <small class="text-secondary text-truncate">{this.fileType(data.name).toUpperCase() || "Executable"} file</small>
+                                                <small className="text-secondary text-truncate">{this.fileType(data.name).toUpperCase() || "Executable"} file</small>
                                             </div>
                                         </div>
                                     </div>
-                                    <h7 class="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</h7>
+                                    <p className="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</p>
                                 </div>
                             )
                         }
                     </div>
+                    {this.state.selectedFiles.length > 0 && <p className="device-message">Select Device</p>}
+                    {this.state.selectedFiles.length > 0 && <div className="device-display-container">
+                        {
+                            !this.state.deviceLoading && this.state.deviceList.map((data, i) =>
+                                <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: this.state.deviceSected==data?"#c1f7f7":"white" }}
+                                    onClick={() => this.setState({deviceSected: this.state.deviceList[i]})}>
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        <div className="d-flex justify-content-between align-items-center">
+                                                {this.renderFileIcon(data.name, 50)}
+                                            <div className="mb-3 mb-sm-0 ml-3">
+                                                <p className="font-weight-bold mb-0 text-truncate"
+                                                    style={{ maxWidth: "240px" }}>{data.name}</p>
+                                                {this.state.deviceSected==data && <small className="text-secondary text-truncate">Selected</small>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* <p className="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</p> */}
+                                </div>
+                            )
+                        }
+                    </div>}
                     {this.state.selectedFiles.length > 0 && <button className="btnx mt-4 mx-auto d-block" onClick={() => { this.uploadFiles() }}>
                         <span className="circle">
                             <span className="icon arrow"></span>
@@ -519,7 +585,7 @@ export default class Main extends Component {
 
     onLogout = () => {
         removeUserSession();
-        props.history.push('/login');
+        this.props.history.push('/enter');
     }
 
     preventDefault = (e) => {
@@ -606,7 +672,7 @@ export default class Main extends Component {
             const formData = new FormData();
             formData.append('caption', "Caption");
             formData.append('username', this.state.user.username);
-            formData.append('recieverName', this.state.user.username);
+            formData.append('recieverName', this.state.deviceSected.name);
             formData.append('senderName', "Website");
             formData.append('file', tempArray[i]);
             axios.post('https://web.synk.tools/file/', formData, {
@@ -614,8 +680,11 @@ export default class Main extends Component {
                     const percent = Math.floor((e.loaded / e.total) * 100);
                     console.log("Upload", i, percent)
                     this.updateArray(i, percent)
+                    if(percent===100) {
+                        axios.post('https://web.synk.tools/device/notify',{username:this.state.user.username,deviceArray: [this.state.deviceSected._id]})
+                    }
                 }
-            })
+                })
                 .catch((err) => {
                     // alert('Error: ' + err)
                     this.updateArray(i, -10)

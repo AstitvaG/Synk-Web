@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import './auth.component.css';
+import './enter.component.css';
 import { setUserSession } from '../utils/common';
 // import ls from 'local-storage'
 
 
-export default class Auth extends Component {
+export default class Enter extends Component {
 
     constructor(props) {
         super(props);
@@ -142,7 +142,7 @@ export default class Auth extends Component {
                         <h2 className="form-title" id="signup" onClick={this.onGoToSignup}><span>or</span>Sign up</h2>
                         <div>
                             <div className="form-holder">
-                                <input type="text" required placeholder="Name"
+                                <input type="username" required placeholder="Name"
                                     className={`input ${this.state.nameError ? 'is-invalid' : ''}`}
                                     value={this.state.username}
                                     onChange={this.onChangeUsername}
@@ -181,16 +181,11 @@ export default class Auth extends Component {
                             <h2 className="form-title" id="login" onClick={this.onGoToLogin}><span>or</span>Log in</h2>
                             <div>
                                 <div className="form-holder">
-                                    <input type="text" required placeholder="Name"
+                                    <input type="username" required placeholder="Name"
                                         className={`input ${this.state.nameError ? 'is-invalid' : ''}`}
                                         value={this.state.username}
                                         onChange={this.onChangeUsername}
                                         onBlur={this.validateName} />
-                                    {
-                                        this.state.nameError
-                                            ? this.state.username ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
-                                            : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
-                                    }
                                     <input type="password" required placeholder="Password"
                                         className={`input ${this.state.passError ? 'is-invalid' : ''}`}
                                         value={this.state.password}

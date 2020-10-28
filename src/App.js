@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import { BrowserRouter as Router} from "react-router-dom";
-import firebase from './firebase'
 import axios from 'axios';
 
-import Auth from './components/auth.component'
+import Enter from './components/enter.component'
 import Main from './components/main.component'
 import PrivateRoute from './utils/privateRoute';
 import PublicRoute from './utils/publicRoute';
@@ -61,15 +60,6 @@ export default class App extends Component {
 			this.setState({ loading: false });
 		});
 
-		const messaging = firebase.messaging()
-		messaging.requestPermission().then(() => {
-			return messaging.getToken()
-		}).then(token => {
-			console.log('Token : ', token)
-		}).catch((err) => {
-			console.log(err);
-		})
-
 	}
 
 	render() {
@@ -82,7 +72,7 @@ export default class App extends Component {
 				{ isMobile()
 					? <div>Download the app to continue</div>
 					: <div className="container-fluid">
-						<PublicRoute path="/auth" component={Auth} />
+						<PublicRoute path="/enter" component={Enter} />
 						<PrivateRoute path="/" exact component={Main} />
 					</div>
 				}

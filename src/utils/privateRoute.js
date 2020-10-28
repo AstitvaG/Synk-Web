@@ -7,7 +7,7 @@ function PrivateRoute({ component: Component, ...rest }) {
     return (
         <Route
             {...rest}
-            render={(props) => getToken() ? <Component {...props} /> : <Redirect to={{ pathname: '/auth', state: { from: props.location } }} />}
+            render={(props) => getToken() ? <Component {...props} /> : <Redirect to={{ pathname: '/enter', state: { from: props.location } }} />}
         />
     )
 }
