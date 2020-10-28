@@ -1,69 +1,92 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import { BrowserRouter as Router} from "react-router-dom";
 import firebase from './firebase'
+import axios from 'axios';
 
 import Auth from './components/auth.component'
 import Main from './components/main.component'
+import PrivateRoute from './utils/privateRoute';
+import PublicRoute from './utils/publicRoute';
+import { getToken, removeUserSession, setUserSession } from './utils/common';
 
 
 function getOS() {
-  var userAgent = window.navigator.userAgent,
-    platform = window.navigator.platform,
-    macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
-    windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
-    iosPlatforms = ['iPhone', 'iPad', 'iPod'],
-    os = null;
-  if (macosPlatforms.indexOf(platform) !== -1) {
-    os = 'Mac OS';
-  } else if (iosPlatforms.indexOf(platform) !== -1) {
-    os = 'iOS';
-  } else if (windowsPlatforms.indexOf(platform) !== -1) {
-    os = 'Windows';
-  } else if (/Android/.test(userAgent)) {
-    os = 'Android';
-  } else if (!os && /Linux/.test(platform)) {
-    os = 'Linux';
-  }
-  return os;
+	var userAgent = window.navigator.userAgent,
+		platform = window.navigator.platform,
+		macosPlatforms = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'],
+		windowsPlatforms = ['Win32', 'Win64', 'Windows', 'WinCE'],
+		iosPlatforms = ['iPhone', 'iPad', 'iPod'],
+		os = null;
+	if (macosPlatforms.indexOf(platform) !== -1) {
+		os = 'Mac OS';
+	} else if (iosPlatforms.indexOf(platform) !== -1) {
+		os = 'iOS';
+	} else if (windowsPlatforms.indexOf(platform) !== -1) {
+		os = 'Windows';
+	} else if (/Android/.test(userAgent)) {
+		os = 'Android';
+	} else if (!os && /Linux/.test(platform)) {
+		os = 'Linux';
+	}
+	return os;
 }
 
 function isMobile() {
-  if (['Android', 'iOS'].indexOf(getOS()) !== -1) return true;
-  else return false;
+	if (['Android', 'iOS'].indexOf(getOS()) !== -1) return true;
+	else return false;
 }
 // export default App;
 
 export default class App extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-    }
-  }
-  componentDidMount = async () => {
-    if (isMobile()) return
-    else {
-      const messaging = firebase.messaging()
-      messaging.requestPermission().then(() => {
-        return messaging.getToken()
-      }).then(token => {
-        console.log('Token : ', token)
-      }).catch((err) => {
-        console.log(err);
-      })
-    }
-  }
-  render() {
-    return (
-      <Router>
-        {localStorage.setItem('userOs', getOS())}
-        { isMobile()
-          ? <div>Download the app to continue</div>
-          : <div className="container-fluid">
-            <Route path="/auth" component={Auth} />
-            <Route path="/" exact component={Main} />
-          </div>
-        }
-      </Router>
-    )
-  }
+
+	constructor(props) {
+		super(props)
+		this.state = {
+			loading: true
+		}
+	}
+
+	componentDidMount = () => {
+		if (isMobile()) {this.setState({loading: false});return}
+		const token = getToken();
+		if (!token) {
+			return;
+		}
+
+		axios.get(`https://web.synk.tools/auth/verifyToken?token=${token}`).then(response => {
+			setUserSession(response.data.token, response.data.user);
+			this.setState({ loading: false });
+		}).catch(error => {
+			removeUserSession();
+			this.setState({ loading: false });
+		});
+
+		const messaging = firebase.messaging()
+		messaging.requestPermission().then(() => {
+			return messaging.getToken()
+		}).then(token => {
+			console.log('Token : ', token)
+		}).catch((err) => {
+			console.log(err);
+		})
+
+	}
+
+	render() {
+		if (this.state.loading && getToken()) {
+			return <div className="content">Checking Authentication...</div>
+		}
+		return (
+			<Router>
+				{localStorage.setItem('userOs', getOS())}
+				{ isMobile()
+					? <div>Download the app to continue</div>
+					: <div className="container-fluid">
+						<PublicRoute path="/auth" component={Auth} />
+						<PrivateRoute path="/" exact component={Main} />
+					</div>
+				}
+			</Router>
+		)
+	}
 }
