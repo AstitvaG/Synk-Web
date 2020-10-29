@@ -1,4 +1,5 @@
-import firebase from 'firebase'
+import firebase from 'firebase/app'
+import 'firebase/messaging'
 
 const config ={
     apiKey: "AIzaSyASJzNLXUPo_rzXp-N_IAtkpFOObCyEtzk",
