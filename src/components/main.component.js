@@ -669,7 +669,7 @@ export default class Main extends Component {
             axios.get('https://web.synk.tools/file/recent/1',{params: {username: this.state.user.username}})
             .then(response => {
                 let file = response.data.files[0]
-                axios.post('http://localhost:7000/device/notify',
+                axios.post('https://web.synk.tools/device/notify',
                 {
                     username:this.state.user.username,
                     token: this.state.deviceSected.token,
