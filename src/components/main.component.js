@@ -2,11 +2,14 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import './main.component.css';
-import $ from 'jquery';
+import $, { unique } from 'jquery';
 import moment from 'moment';
 import { getUser, removeUserSession } from '../utils/common';
 import ClipLoader from "react-spinners/ClipLoader";
 import firebase from '../firebase'
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import { detect } from 'detect-browser';
+
 
 export default class Main extends Component {
 
@@ -33,7 +36,12 @@ export default class Main extends Component {
             deviceList: [],
             deviceLoading: true,
             deviceSected: '',
+            myToken: '',
         }
+    }
+
+    handleCase = (str) => {
+        return str[0].toUpperCase() + str.substring(1).toLowerCase();
     }
 
     componentDidMount() {
@@ -51,23 +59,27 @@ export default class Main extends Component {
                 this.setState({ fileList: response.data.files });
                 this.groupFiles(response.data.files)
             })
-            .catch(err => alert(err));
+            .catch(err => console.log(err));
     }
 
-    registerPushMessaging = () => {
+    registerPushMessaging = async () => {
         const messaging = firebase.messaging()
-		Notification.requestPermission().then(() => {
-			return messaging.getToken()
+        let unique = await FingerprintJS.load().then((res)=> res.get()).then((res=> res.visitorId));
+        let bd = await detect()
+		await Notification.requestPermission().then(() => {
+            return messaging.getToken()
 		}).then(token => {
-            console.log('Token : ', token)
+            this.setState({myToken: token})
+            // console.log('Token : ', token)
             axios.post('https://web.synk.tools/device/add',{
                 username: this.state.user.username,
                 token: token,
-                deviceName: "Website",
-                platform: 2
+                deviceName: this.handleCase(bd.name) + " on " + this.handleCase(bd.os),
+                platform: 2,
+                unique: unique,
             })
             .then(res => {
-                this.setState({ deviceList: res.data.devices });
+                this.setState({ myToken: res.data.token });
                 this.getDeviceList()
             })
             .catch(err => console.log(err));
@@ -79,10 +91,10 @@ export default class Main extends Component {
     getDeviceList = () => {
         axios.post('https://web.synk.tools/device/',{username: this.state.user.username})
             .then(res => {
-                this.setState({ deviceList: res.data.devices,deviceLoading:false, deviceSected: res.data.devices[0] });
-                console.log(res.data.devices)
+                let devList = res.data.devices.filter((data) => data.token!==this.state.myToken)
+                this.setState({ deviceList: devList,deviceLoading:false, deviceSected: devList[0] });
             })
-            .catch(err => alert(err));
+            .catch(err => console.log(err));
     }
 
     groupFiles = (arr) => {
@@ -652,7 +664,22 @@ export default class Main extends Component {
     updateArray = (index, value) => {
         let tempArray = this.state.uploadArray
         tempArray[index].done = value
-        if (value === 100) this.setState({ countDone: this.state.countDone + 1 })
+        if (value === 100) {
+            this.setState({ countDone: this.state.countDone + 1 })
+            axios.get('https://web.synk.tools/file/recent/1',{params: {username: this.state.user.username}})
+            .then(response => {
+                let file = response.data.files[0]
+                axios.post('http://localhost:7000/device/notify',
+                {
+                    username:this.state.user.username,
+                    token: this.state.deviceSected.token,
+                    title: null,
+                    body: null,
+                    content: JSON.stringify(file)
+                })
+            })
+            .catch(err => console.log(err));
+        }
         this.setState({ uploadArray: tempArray })
     }
 
@@ -661,7 +688,6 @@ export default class Main extends Component {
         let tempArray = this.state.selectedFiles
         for (let i in tempArray) {
             tempArray[i].done = 0
-            tempArray[i].senderId = this.state.senderId
             tempArray[i].caption = "Caption"
             tempArray[i].recieverName = "Temp"
             tempArray[i].createdAt = new Date()
@@ -680,13 +706,9 @@ export default class Main extends Component {
                     const percent = Math.floor((e.loaded / e.total) * 100);
                     console.log("Upload", i, percent)
                     this.updateArray(i, percent)
-                    if(percent===100) {
-                        axios.post('https://web.synk.tools/device/notify',{username:this.state.user.username,deviceArray: [this.state.deviceSected._id]})
-                    }
                 }
                 })
                 .catch((err) => {
-                    // alert('Error: ' + err)
                     this.updateArray(i, -10)
                 })
         }
@@ -697,7 +719,6 @@ export default class Main extends Component {
     }
 
     render() {
-        var datesDone = []
         return (
             <div>
                 <div className="app-container unselectable">
