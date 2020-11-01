@@ -714,10 +714,6 @@ export default class Main extends Component {
         }
     }
 
-    closeUploadModal = () => {
-        this.setState({ showModal: 'none' })
-    }
-
     render() {
         return (
             <div>
