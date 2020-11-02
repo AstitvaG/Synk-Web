@@ -62,8 +62,8 @@ export default class Enter extends Component {
         });
     }
 
-    onSignup = () => {
-        console.log("Trying to signup....")
+    onSignup = (e) => {
+        e.preventDefault();
         var { emailError, nameError, passError } = this.state
         if (emailError || nameError || passError) return;
         const newUser = {
@@ -85,9 +85,8 @@ export default class Enter extends Component {
             })
     }
 
-    onLogin = () => {
-        // var { emailError, nameError, passError } = this.state
-        // if (emailError || nameErro || passError) return;
+    onLogin = (e) => {
+        e.preventDefault();
         var loginDetails = {
             username: this.state.email,
             password: this.state.password
@@ -140,7 +139,7 @@ export default class Enter extends Component {
                 <div className="form-structor">
                     <div className="signup">
                         <h2 className="form-title" id="signup" onClick={this.onGoToSignup}><span>or</span>Sign up</h2>
-                        <div>
+                        <form onSubmit={this.onSignup}>
                             <div className="form-holder">
                                 <input type="username" required placeholder="Name"
                                     className="input"
@@ -174,12 +173,12 @@ export default class Enter extends Component {
                                 }
                             </div>
                             <button onClick={this.onSignup} className="submit-btn">Sign up</button>
-                        </div>
+                        </form>
                     </div>
                     <div className="login slide-up">
                         <div className="center">
                             <h2 className="form-title" id="login" onClick={this.onGoToLogin}><span>or</span>Log in</h2>
-                            <div>
+                            <form onSubmit={this.onLogin}>
                                 <div className="form-holder">
                                     <input type="username" required placeholder="Name or Email"
                                         className="input"
@@ -188,10 +187,10 @@ export default class Enter extends Component {
                                     <input type="password" required placeholder="Password"
                                         className="input"
                                         value={this.state.password}
-                                        onChange={this.onChangePassword}/>
+                                        onChange={this.onChangePassword} />
                                 </div>
                                 <button onClick={this.onLogin} className="submit-btn">Log in</button>
-                            </div>
+                            </form>
                         </div>
                     </div>
                 </div>
