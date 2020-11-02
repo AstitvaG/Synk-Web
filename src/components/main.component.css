@@ -11,16 +11,6 @@ html {
 	scroll-behavior: smooth;
 }
 
-::-webkit-scrollbar {
-	width: 5px;
-}
-
-
-::-webkit-scrollbar-thumb {
-	-webkit-border-radius: 10px;
-	border-radius: 10px;
-	background: #aaa;
-}
 
 html,
 body {
@@ -52,6 +42,12 @@ a {
 	text-decoration: none;
 	cursor: pointer;
 }
+
+.simplebar-scrollbar:before {
+	background-color: #aaa !important;
+	width: 5px !important;
+}
+
 
 .app-container {
 	position: relative;
@@ -166,23 +162,13 @@ a {
 	opacity: 1;
 }
 
-.right-sent-files {
-	max-height: 450px;
-	overflow: hidden;
+.right-files {
+	max-height: 340px;
+	overflow-x: hidden;
 }
 
-.right-sent-files:hover {
-	overflow-y: overlay;
-}
-
-
-.right-rec-files {
-	max-height: 230px;
-	overflow: hidden;
-}
-
-.right-rec-files:hover {
-	overflow-y: overlay;
+.simplebar-track.simplebar-vertical .simplebar-scrollbar:before {
+	background-color: "orange"
 }
 
 .content-section {

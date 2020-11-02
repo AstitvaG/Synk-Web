@@ -9,6 +9,8 @@ import ClipLoader from "react-spinners/ClipLoader";
 import firebase from '../firebase'
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { detect } from 'detect-browser';
+import SimpleBar from 'simplebar-react';
+import 'simplebar/dist/simplebar.min.css';
 
 
 export default class Main extends Component {
@@ -516,7 +518,7 @@ export default class Main extends Component {
 
     renderRight = () => {
         return (
-            <div className={`right-area ${this.state.showRight ? 'show' : ''}`}>
+            <SimpleBar className={`right-area ${this.state.showRight ? 'show' : ''}`}>
                 <button className="btn-close-right" onClick={(e) => { this.setState({ showRight: false }) }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-x-circle" viewBox="0 0 24 24">
                         <defs />
@@ -528,20 +530,20 @@ export default class Main extends Component {
                         <p className="right-area-header">Files Uploading</p>
                         <button className="more-action"></button>
                     </div>
-                    <div className="right-sent-files">
+                    <SimpleBar className="right-files">
                         <div>
                             {
                                 this.state.uploadArray.map((file, i) => (file.done < 100 && this.renderUploadCard(file, i)))
                             }
                         </div>
-                    </div>
+                    </SimpleBar>
                 </div> <br /></> : ""}
                 {this.state.sentGrouped.length > 0 || this.state.countDone > 0 ? <div>
                     <div className="right-area-header-wrapper">
                         <p className="right-area-header">Files Sent</p>
                         <button className="more-action"></button>
                     </div>
-                    <div className="right-sent-files">
+                    <SimpleBar className="right-files">
                         {this.state.countDone > 0 && <div>
                             <div className="download-item-line">
                                 <div className="line-header">Uploaded Just Now</div>
@@ -560,7 +562,7 @@ export default class Main extends Component {
                                 </div>
                             </div>
                         ))}
-                    </div>
+                    </SimpleBar>
                 </div> : ""}
                 <br />
 
@@ -570,15 +572,7 @@ export default class Main extends Component {
                         <p className="right-area-header">Files Recieved</p>
                         <button className="more-action"></button>
                     </div>
-                    <div className="right-sent-files">
-                        {/* {this.state.countDone > 0 && <div>
-                            <div className="download-item-line">
-                                <div className="line-header">Uploaded Just Now</div>
-                                {
-                                    this.state.uploadArray.map((file, i) => (file.done === 100 && this.renderDownloadCard(file, 0, i)))
-                                }
-                            </div>
-                        </div>} */}
+                    <SimpleBar className="right-files">
                         {this.state.recGrouped.map((partday, i) => (
                             <div key={i}>
                                 <div className="download-item-line">
@@ -589,9 +583,9 @@ export default class Main extends Component {
                                 </div>
                             </div>
                         ))}
-                    </div>
+                    </SimpleBar>
                 </div> : ""}
-            </div>
+            </SimpleBar>
         )
     }
 
@@ -664,22 +658,8 @@ export default class Main extends Component {
     updateArray = (index, value) => {
         let tempArray = this.state.uploadArray
         tempArray[index].done = value
-        if (value === 100) {
+        if (value === 100) 
             this.setState({ countDone: this.state.countDone + 1 })
-            axios.get('https://web.synk.tools/file/recent/1',{params: {username: this.state.user.username}})
-            .then(response => {
-                let file = response.data.files[0]
-                axios.post('https://web.synk.tools/device/notify',
-                {
-                    username:this.state.user.username,
-                    token: this.state.deviceSected.token,
-                    title: null,
-                    body: null,
-                    content: JSON.stringify(file)
-                })
-            })
-            .catch(err => console.log(err));
-        }
         this.setState({ uploadArray: tempArray })
     }
 
@@ -701,6 +681,7 @@ export default class Main extends Component {
             formData.append('recieverName', this.state.deviceSected.name);
             formData.append('senderName', "Website");
             formData.append('file', tempArray[i]);
+            formData.append('token', this.state.deviceSected.token);
             axios.post('https://web.synk.tools/file/', formData, {
                 onUploadProgress: (e) => {
                     const percent = Math.floor((e.loaded / e.total) * 100);
