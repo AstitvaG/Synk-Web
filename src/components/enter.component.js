@@ -89,7 +89,7 @@ export default class Enter extends Component {
         // var { emailError, nameError, passError } = this.state
         // if (emailError || nameErro || passError) return;
         var loginDetails = {
-            username: this.state.username,
+            username: this.state.email,
             password: this.state.password
         }
         this.setState({ loading: true })
@@ -143,7 +143,7 @@ export default class Enter extends Component {
                         <div>
                             <div className="form-holder">
                                 <input type="username" required placeholder="Name"
-                                    className={`input ${this.state.nameError ? 'is-invalid' : ''}`}
+                                    className="input"
                                     value={this.state.username}
                                     onChange={this.onChangeUsername}
                                     onBlur={this.validateName} />
@@ -153,7 +153,7 @@ export default class Enter extends Component {
                                         : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
                                 }
                                 <input type="email" required placeholder="Email"
-                                    className={`input ${this.state.emailError ? 'is-invalid' : ''}`}
+                                    className="input"
                                     value={this.state.email}
                                     onChange={this.onChangeEmail}
                                     onBlur={this.validateEmail} />
@@ -163,7 +163,7 @@ export default class Enter extends Component {
                                         : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
                                 }
                                 <input type="password" required placeholder="Password"
-                                    className={`input ${this.state.passError ? 'is-invalid' : ''}`}
+                                    className="input"
                                     value={this.state.password}
                                     onChange={this.onChangePassword}
                                     onBlur={this.validatePass} />
@@ -181,16 +181,14 @@ export default class Enter extends Component {
                             <h2 className="form-title" id="login" onClick={this.onGoToLogin}><span>or</span>Log in</h2>
                             <div>
                                 <div className="form-holder">
-                                    <input type="username" required placeholder="Name"
-                                        className={`input ${this.state.nameError ? 'is-invalid' : ''}`}
-                                        value={this.state.username}
-                                        onChange={this.onChangeUsername}
-                                        onBlur={this.validateName} />
+                                    <input type="username" required placeholder="Name or Email"
+                                        className="input"
+                                        value={this.state.email}
+                                        onChange={this.onChangeEmail} />
                                     <input type="password" required placeholder="Password"
-                                        className={`input ${this.state.passError ? 'is-invalid' : ''}`}
+                                        className="input"
                                         value={this.state.password}
-                                        onChange={this.onChangePassword}
-                                        onBlur={this.validatePass} />
+                                        onChange={this.onChangePassword}/>
                                 </div>
                                 <button onClick={this.onLogin} className="submit-btn">Log in</button>
                             </div>
