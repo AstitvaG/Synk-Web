@@ -4,13 +4,15 @@ import axios from 'axios';
 import './main.component.css';
 import $, { unique } from 'jquery';
 import moment from 'moment';
-import { getUser, removeUserSession } from '../utils/common';
+import { getUser, removeUserSession, parseDate, renderFileIcon } from '../utils/common';
 import ClipLoader from "react-spinners/ClipLoader";
 import firebase from '../firebase'
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { detect } from 'detect-browser';
 import SimpleBar from 'simplebar-react';
+import SettingsModal from './settings.component';
 import 'simplebar/dist/simplebar.min.css';
+import ReactTooltip from 'react-tooltip';
 
 
 export default class Main extends Component {
@@ -39,6 +41,7 @@ export default class Main extends Component {
             deviceLoading: true,
             deviceSected: '',
             myToken: '',
+            settingsModal: false,
         }
     }
 
@@ -56,7 +59,7 @@ export default class Main extends Component {
                 $('div.main-area-header').removeClass('fixed');
             }
         });
-        axios.get('https://web.synk.tools/file/recent/25',{params: {username: this.state.user.username}})
+        axios.get('https://web.synk.tools/file/recent/25', { params: { username: this.state.user.username } })
             .then(response => {
                 this.setState({ fileList: response.data.files });
                 this.groupFiles(response.data.files)
@@ -66,41 +69,41 @@ export default class Main extends Component {
 
     registerPushMessaging = async () => {
         const messaging = firebase.messaging()
-        let unique = await FingerprintJS.load().then((res)=> res.get()).then((res=> res.visitorId));
+        let unique = await FingerprintJS.load().then((res) => res.get()).then((res => res.visitorId));
         let bd = await detect()
-		await Notification.requestPermission().then(() => {
+        await Notification.requestPermission().then(() => {
             return messaging.getToken()
-		}).then(token => {
-            this.setState({myToken: token})
+        }).then(token => {
+            this.setState({ myToken: token })
             // console.log('Token : ', token)
-            axios.post('https://web.synk.tools/device/add',{
+            axios.post('https://web.synk.tools/device/add', {
                 username: this.state.user.username,
                 token: token,
                 deviceName: this.handleCase(bd.name) + " on " + this.handleCase(bd.os),
                 platform: 2,
                 unique: unique,
             })
-            .then(res => {
-                this.setState({ myToken: res.data.token });
-                this.getDeviceList()
-            })
-            .catch(err => console.log(err));
-		}).catch((err) => {
-			console.log(err);
-		})
+                .then(res => {
+                    this.setState({ myToken: res.data.token });
+                    this.getDeviceList()
+                })
+                .catch(err => console.log(err));
+        }).catch((err) => {
+            console.log(err);
+        })
     }
 
     getDeviceList = () => {
-        axios.post('https://web.synk.tools/device/',{username: this.state.user.username})
+        axios.post('https://web.synk.tools/device/', { username: this.state.user.username })
             .then(res => {
-                let devList = res.data.devices.filter((data) => data.token!==this.state.myToken)
-                this.setState({ deviceList: devList,deviceLoading:false, deviceSected: devList[0] });
+                let devList = res.data.devices.filter((data) => data.token !== this.state.myToken)
+                this.setState({ deviceList: devList, deviceLoading: false, deviceSected: devList[0] });
             })
             .catch(err => console.log(err));
     }
 
     groupFiles = (arr) => {
-        var sent = arr.filter((val) => val.senderName==='Website')
+        var sent = arr.filter((val) => val.senderName === 'Website')
         var done = new Array(), ret = new Array(), tem = new Array()
         for (var item in sent) {
             if (!done.includes(moment(sent[item].createdAt).format("dd MMM yyyy"))) {
@@ -112,7 +115,7 @@ export default class Main extends Component {
         }
         if (tem.length > 0) ret.push(tem)
         this.setState({ sentGrouped: ret })
-        var rec = arr.filter((val) => val.senderName!=='Website')
+        var rec = arr.filter((val) => val.senderName !== 'Website')
         done = new Array(), ret = new Array(), tem = new Array()
         for (var item in rec) {
             if (!done.includes(moment(rec[item].createdAt).format("dd MMM yyyy"))) {
@@ -126,83 +129,12 @@ export default class Main extends Component {
         this.setState({ recGrouped: ret })
     }
 
-    parseDate = (dateString) => {
-        var today = moment();
-        var yesterday = moment().subtract(1, 'day');
-        var engagementDate = new Date(dateString);
-        if (moment(engagementDate).isSame(today, 'day'))
-            return 'Today, ' + moment(dateString).format("Do MMMM yyyy")
-        else if (moment(engagementDate).isSame(yesterday, 'day'))
-            return 'Yesterday, ' + moment(dateString).format("Do MMMM yyyy")
-        return moment(dateString).format("dddd, Do MMMM yyyy")
-    }
-
-    getFileType = (ext) => {
-        if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'png', 'webp', 'svg'].includes(ext)) return 1
-        else if (['pdf'].includes(ext)) return 2
-        else if (['doc', 'docx'].includes(ext)) return 3
-        else if (['xls', 'xlsx'].includes(ext)) return 4
-        else if (['ppt', 'pptx'].includes(ext)) return 5
-        else if (['sh', 'tex', 'py', 'java', 'c', 'cpp', 'js', 'html', 'css'].includes(ext)) return 6
-        else if (['webm', 'mpg', 'mp2', 'mpeg', 'mpe', 'mpv', 'ogg', 'mp4', 'm4p', 'm4v', 'avi', 'wmv', 'mov', 'qt', 'flv', 'swf', 'avchd'].includes(ext)) return 7
-        else if (ext === "close-icon") return 8
-        else if (ext === "Website") return 9
-        else if (ext === "Android") return 10
-        else if (ext === "iOS") return 11
-        else return 0
-    }
-
-    renderFileIcon = (ext, size = 40) => {
-        var col, ico
-        switch (this.getFileType(ext)) {
-            case 1:
-                col = '#C13584', ico = "far fa-file-image"
-                break
-            case 2:
-                col = '#ff0000', ico = "far fa-file-pdf"
-                break
-            case 3:
-                col = '#2a5492', ico = "far fa-file-word"
-                break
-            case 4:
-                col = '#247c3f', ico = "far fa-file-excel"
-                break
-            case 5:
-                col = '#cd4f2f', ico = "far fa-file-powerpint"
-                break
-            case 6:
-                col = '#7c007c', ico = "far fa-file-code"
-                break
-            case 7:
-                col = '#f7c639', ico = "far fa-file-video"
-                break
-            case 8:
-                col = '#22244a', ico = "fas fa-times"
-                break
-            case 9:
-                col = '#dd4b25', ico = "fas fa-code"
-                break
-            case 10:
-                col = '#30dd81', ico = "fab fa-android"
-                break
-            case 11:
-                col = '#000000', ico = "fab fa-apple"
-                break
-            default:
-                col = '#555555', ico = "far fa-file-archive"
-        }
-        return (
-            <div className="btn-circle" style={{ color: "#fff", background: col, width: size + "px", height: size + "px" }}>
-                <i className={ico + " m-auto"} style={{ fontSize: (size * 1.33 / 40) + "em" }}></i>
-            </div>
-        )
-    }
 
     renderUploadCard = (item, idx) => {
         return (
             <div className="download-area" key={idx}>
                 <div className="download-item-icon">
-                    {this.renderFileIcon((item.name || item.originalName).split('.').pop().toLowerCase())}
+                    {renderFileIcon((item.name || item.originalName).split('.').pop().toLowerCase())}
                 </div>
                 <div className="download-item-texts">
                     <p className="download-text-header">{item.originalName || item.name}</p>
@@ -223,7 +155,7 @@ export default class Main extends Component {
         return (
             <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("https://web.synk.tools/file/render/" + item.filename, "_blank")}>
                 <div className="download-item-icon">
-                    {this.renderFileIcon(this.fileType(item.name || item.originalName))}
+                    {renderFileIcon(this.fileType(item.name || item.originalName))}
                 </div>
                 <div className="download-item-texts">
                     <p className="download-text-header">{item.originalName || item.name}</p>
@@ -252,34 +184,39 @@ export default class Main extends Component {
                         <path d="M15 9l-6 6M9 9l6 6" />
                     </svg>
                 </button>
+                <SettingsModal
+                    show={this.state.settingsModal} user={this.state.user}
+                    onHide={() => this.setState({ settingsModal: false })}
+                />
                 <div className="app-name">Synk</div>
                 <a href="#" className={`item-link ${this.state.activeTab === 1 ? 'active' : ''}`} id="pageLink" onClick={(e) => { this.setState({ activeTab: 1 }) }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-grid" viewBox="0 0 24 24">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-grid" viewBox="0 0 24 24">
                         <defs />
                         <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
                     </svg>
                 </a>
                 <a href="#" className={`item-link ${this.state.activeTab === 2 ? 'active' : ''}`} id="pageLink" onClick={(e) => { this.setState({ activeTab: 2 }) }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-folder" viewBox="0 0 24 24">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-folder" viewBox="0 0 24 24">
                         <defs />
                         <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
                     </svg>
                 </a>
                 <a href="#" className={`item-link ${this.state.activeTab === 3 ? 'active' : ''}`} id="pageLink" onClick={(e) => { this.setState({ activeTab: 3 }) }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-hard-drive" viewBox="0 0 24 24">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-hard-drive" viewBox="0 0 24 24">
                         <defs />
                         <path d="M22 12H2M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11zM6 16h.01M10 16h.01" />
                     </svg>
                 </a>
-                <a href="#" className={`item-link ${this.state.activeTab === 4 ? 'active' : ''}`} id="pageLink" onClick={(e) => { this.setState({ activeTab: 4 }) }}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-settings" viewBox="0 0 24 24">
-                        <defs />
-                        <circle cx="12" cy="12" r="3" />
-                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-                    </svg>
+                <a className="item-link" data-tip="Settings" onClick={() => this.setState({ settingsModal: true })} id="pageLink">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-settings" viewBox="0 0 24 24"><defs /><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" /></svg>
                 </a>
                 <button className="btn-logout" onClick={this.onLogout}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-log-out" viewBox="0 0 24 24">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-log-out" viewBox="0 0 24 24">
                         <defs />
                         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /> </svg>
                 </button>
@@ -321,8 +258,8 @@ export default class Main extends Component {
                                     <div className="d-flex justify-content-between align-items-center">
                                         <div className="d-flex justify-content-between align-items-center">
                                             {this.state.closeIcon != i
-                                                ? this.renderFileIcon(this.fileType(data.name), 50)
-                                                : this.renderFileIcon("close-icon", 50)
+                                                ? renderFileIcon(this.fileType(data.name), 50)
+                                                : renderFileIcon("close-icon", 50)
                                             }
                                             <div className="mb-3 mb-sm-0 ml-3">
                                                 <p className="font-weight-bold mb-0 text-truncate"
@@ -340,15 +277,15 @@ export default class Main extends Component {
                     {this.state.selectedFiles.length > 0 && <div className="device-display-container">
                         {
                             !this.state.deviceLoading && this.state.deviceList.map((data, i) =>
-                                <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: this.state.deviceSected==data?"#c1f7f7":"white" }}
-                                    onClick={() => this.setState({deviceSected: this.state.deviceList[i]})}>
+                                <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: this.state.deviceSected == data ? "#c1f7f7" : "white" }}
+                                    onClick={() => this.setState({ deviceSected: this.state.deviceList[i] })}>
                                     <div className="d-flex justify-content-between align-items-center">
                                         <div className="d-flex justify-content-between align-items-center">
-                                                {this.renderFileIcon(data.name, 50)}
+                                            {renderFileIcon(data.name, 50)}
                                             <div className="mb-3 mb-sm-0 ml-3">
                                                 <p className="font-weight-bold mb-0 text-truncate"
                                                     style={{ maxWidth: "240px" }}>{data.name}</p>
-                                                {this.state.deviceSected==data && <small className="text-secondary text-truncate">Selected</small>}
+                                                {this.state.deviceSected == data && <small className="text-secondary text-truncate">Selected</small>}
                                             </div>
                                         </div>
                                     </div>
@@ -555,7 +492,7 @@ export default class Main extends Component {
                         {this.state.sentGrouped.map((partday, i) => (
                             <div key={i}>
                                 <div className="download-item-line">
-                                    <div className="line-header">{this.parseDate(partday[0].createdAt)}</div>
+                                    <div className="line-header">{parseDate(partday[0].createdAt)}</div>
                                     {
                                         partday.map((file, j) => (this.renderDownloadCard(file, i, j)))
                                     }
@@ -576,7 +513,7 @@ export default class Main extends Component {
                         {this.state.recGrouped.map((partday, i) => (
                             <div key={i}>
                                 <div className="download-item-line">
-                                    <div className="line-header">{this.parseDate(partday[0].createdAt)}</div>
+                                    <div className="line-header">{parseDate(partday[0].createdAt)}</div>
                                     {
                                         partday.map((file, j) => (this.renderDownloadCard(file, i, j)))
                                     }
@@ -658,7 +595,7 @@ export default class Main extends Component {
     updateArray = (index, value) => {
         let tempArray = this.state.uploadArray
         tempArray[index].done = value
-        if (value === 100) 
+        if (value === 100)
             this.setState({ countDone: this.state.countDone + 1 })
         this.setState({ uploadArray: tempArray })
     }
@@ -688,7 +625,7 @@ export default class Main extends Component {
                     console.log("Upload", i, percent)
                     this.updateArray(i, percent)
                 }
-                })
+            })
                 .catch((err) => {
                     this.updateArray(i, -10)
                 })
@@ -703,6 +640,7 @@ export default class Main extends Component {
                     {this.renderCenter()}
                     {this.renderRight()}
                 </div>
+                <ReactTooltip place="bottom" type="dark" effect="solid" />
             </div>
         )
     }
