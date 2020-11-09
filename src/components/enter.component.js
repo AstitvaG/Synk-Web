@@ -2,8 +2,10 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import './enter.component.css';
 import { setUserSession } from '../utils/common';
-// import ls from 'local-storage'
-
+import { toast } from 'react-toastify';
+import ReactTooltip from 'react-tooltip';
+import ClipLoader from "react-spinners/ClipLoader";
+/* eslint-disable jsx-a11y/anchor-is-valid */
 
 export default class Enter extends Component {
 
@@ -17,47 +19,42 @@ export default class Enter extends Component {
             nameError: 'Name must be longer than 3 characters',
             emailError: 'Email must be of valid type',
             passError: 'Minimum eight characters are required, at least one letter and one number',
-            userOs: localStorage.getItem('userOs'),
         }
-
-        this.onGoToLogin = this.onGoToLogin.bind(this);
-        this.onGoToSignup = this.onGoToSignup.bind(this);
     }
 
-    onChangeUsername = event => {
-        this.setState({ username: event.target.value }, () => { this.validateUsername(); });
-    }
-
-
-    onChangeEmail = event => {
-        this.setState({ email: event.target.value }, () => { this.validateEmail(); });
-    }
-
-
-    onChangePassword = event => {
-        this.setState({ password: event.target.value }, () => { this.validatePass(); });
-    }
-
-    validateUsername = () => {
-        const { username } = this.state;
+    onChangeUsername = (event, check = true) => {
+        this.setState({ username: event.target.value });
+        const username = event.target.value;
+        let truth = username.length > 3
         this.setState({
-            nameError: username.length > 3 ? null : 'Name must be longer than 3 characters'
-        });
+            nameError: truth ? null : 'Name must be longer than 3 characters'
+        })
+        check && truth && axios.get('https://web.synk.tools/auth/check/name/' + username)
+            .catch(() => this.setState({
+                nameError: 'Username taken!'
+            }))
     }
 
-    validateEmail = () => {
-        const { email } = this.state;
+
+    onChangeEmail = (event, check = true) => {
+        this.setState({ email: event.target.value });
+        const email = event.target.value;
+        let truth = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
         this.setState({
-            emailError: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email)
-                // emailError: /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(email) 
-                ? null : 'Email must be of valid type'
-        });
+            emailError: truth ? null : 'Email must be of valid type'
+        })
+        check && truth && axios.get('https://web.synk.tools/auth/check/email/' + email)
+            .catch(() => this.setState({
+                emailError: 'Email taken!'
+            }))
     }
 
-    validatePass = () => {
-        const { password } = this.state;
+
+    onChangePassword = (event) => {
+        this.setState({ password: event.target.value });
+        const password = event.target.value;
         this.setState({
-            passError: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(password)
+            passError: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/.test(password)
                 ? null : 'Minimum eight characters are required, at least one letter and one number'
         });
     }
@@ -65,68 +62,60 @@ export default class Enter extends Component {
     onSignup = (e) => {
         e.preventDefault();
         var { emailError, nameError, passError } = this.state
-        if (emailError || nameError || passError) return;
+        if (emailError || nameError || passError) {
+            toast.dark('🔧 Details have errors, check again!');
+            return;
+        }
+        this.setState({ loading: true })
         const newUser = {
             username: this.state.username,
             email: this.state.email,
             password: this.state.password,
         }
-        this.setState({ loading: true })
         axios.post('https://web.synk.tools/auth/signup', newUser)
             .then(res => {
-                console.log("Signup")
                 this.setState({ loading: false })
+                toast.dark('✌️ Signed up Successfully!');
                 setUserSession(res.data.token, res.data.user)
                 this.props.history.push('/')
             })
             .catch(err => {
+                toast.dark('⚡ Some error occured!')
                 this.setState({ loading: false })
-                console.log(err)
             })
     }
 
     onLogin = (e) => {
         e.preventDefault();
+        this.setState({ loading: true })
         var loginDetails = {
             username: this.state.email,
             password: this.state.password
         }
-        this.setState({ loading: true })
         axios.post('https://web.synk.tools/auth/login', loginDetails)
             .then(res => {
                 this.setState({ loading: false })
+                toast.dark('✌️ Logged in Successfully!');
                 setUserSession(res.data.token, res.data.user)
                 this.props.history.push('/')
             })
             .catch(err => {
                 this.setState({ loading: false })
+                toast.dark('🔑 Invalid credentials!');
                 console.log(err)
             })
     }
 
-    onGoToLogin = (e) => {
-        let parent = e.target.parentNode.parentNode;
-        const signupBtn = document.getElementById('signup');
-        Array.from(e.target.parentNode.parentNode.classList).find((element) => {
-            if (element !== "slide-up") {
-                parent.classList.add('slide-up')
-            } else {
-                signupBtn.parentNode.classList.add('slide-up')
-                parent.classList.remove('slide-up')
-            }
-            return null
-        });
-    }
-
-
-    onGoToSignup = (e) => {
+    onToggle = (e, val = 0) => {
         let parent = e.target.parentNode;
-        const loginBtn = document.getElementById('login');
-        Array.from(e.target.parentNode.classList).find((element) => {
+        if (val === 0) parent = parent.parentNode;
+        const btn = document.getElementById(val === 1 ? 'login' : 'signup');
+        Array.from(parent.classList).find((element) => {
             if (element !== "slide-up") {
                 parent.classList.add('slide-up')
             } else {
-                loginBtn.parentNode.parentNode.classList.add('slide-up')
+                if (val === 0) btn.parentNode.classList.add('slide-up')
+                else btn.parentNode.parentNode.classList.add('slide-up')
                 parent.classList.remove('slide-up')
             }
             return null
@@ -138,7 +127,7 @@ export default class Enter extends Component {
             <div className="context-user">
                 <div className="form-structor">
                     <div className="signup">
-                        <h2 className="form-title" id="signup" onClick={this.onGoToSignup}><span>or</span>Sign up</h2>
+                        <h2 className="form-title" id="signup" onClick={(e) => this.onToggle(e, 1)}><span>or</span>Sign up</h2>
                         <form onSubmit={this.onSignup}>
                             <div className="form-holder">
                                 <input type="username" required placeholder="Name"
@@ -146,53 +135,70 @@ export default class Enter extends Component {
                                     value={this.state.username}
                                     onChange={this.onChangeUsername}
                                     onBlur={this.validateName} />
-                                {
-                                    this.state.nameError
-                                        ? this.state.username ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
-                                        : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
-                                }
+                                <a data-tip={this.state.nameError}>
+                                    {
+                                        this.state.nameError
+                                            ? this.state.username ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                            : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                    }
+                                </a>
                                 <input type="email" required placeholder="Email"
                                     className="input"
                                     value={this.state.email}
                                     onChange={this.onChangeEmail}
                                     onBlur={this.validateEmail} />
-                                {
-                                    this.state.emailError
-                                        ? this.state.email ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
-                                        : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
-                                }
+                                <a data-tip={this.state.emailError}>
+                                    {
+                                        this.state.emailError
+                                            ? this.state.email ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                            : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                    }
+                                </a>
                                 <input type="password" required placeholder="Password"
                                     className="input"
                                     value={this.state.password}
                                     onChange={this.onChangePassword}
                                     onBlur={this.validatePass} />
-                                {
-                                    this.state.passError
-                                        ? this.state.password ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
-                                        : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
-                                }
+                                <a data-tip={this.state.passError}>
+                                    {
+                                        this.state.passError
+                                            ? this.state.password ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                            : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                    }
+                                </a>
                             </div>
-                            <button onClick={this.onSignup} className="submit-btn">Sign up</button>
+                            <button onClick={this.onSignup} className="submit-btn">
+                                {!this.state.loading
+                                    ? "Sign up"
+                                    : <ClipLoader size={15} color="white" />
+                                }
+                            </button>
                         </form>
                     </div>
                     <div className="login slide-up">
                         <div className="center">
-                            <h2 className="form-title" id="login" onClick={this.onGoToLogin}><span>or</span>Log in</h2>
+                            <h2 className="form-title" id="login" onClick={this.onToggle}><span>or</span>Log in</h2>
                             <form onSubmit={this.onLogin}>
                                 <div className="form-holder">
                                     <input type="username" required placeholder="Name or Email"
                                         className="input"
                                         value={this.state.email}
-                                        onChange={this.onChangeEmail} />
+                                        onChange={(e) => this.onChangeEmail(e, false)} />
                                     <input type="password" required placeholder="Password"
                                         className="input"
                                         value={this.state.password}
-                                        onChange={this.onChangePassword} />
+                                        onChange={(e) => this.onChangePassword(e, false)} />
                                 </div>
-                                <button onClick={this.onLogin} className="submit-btn">Log in</button>
+                                <button onClick={this.onLogin} className="submit-btn">
+                                    {!this.state.loading
+                                        ? "Log in"
+                                        : <ClipLoader size={15} color="white" />
+                                    }
+                                </button>
                             </form>
                         </div>
                     </div>
+                    <ReactTooltip place="bottom" type="dark" effect="solid" />
                 </div>
             </div>
         )

@@ -14,8 +14,8 @@
 .form-structor {
 	background-color: #222;
 	border-radius: 15px;
-	height: 550px;
-	width: 350px;
+	height: 750px;
+	width: 450px;
 	position: relative;
 	overflow: hidden;
 }
@@ -30,7 +30,7 @@
 	left: 0;
 	background-repeat: no-repeat;
 	background-position: left bottom;
-	background-size: 500px;
+	background-size: 450px 750px;
 	background-image: url('https://images.unsplash.com/photo-1503602642458-232111445657?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=bf884ad570b50659c5fa2dc2cfb20ecf&auto=format&fit=crop&w=1000&q=100');
 }
 
@@ -61,7 +61,7 @@
 }
 
 .form-structor .signup.slide-up .form-title {
-	font-size: 1em;
+	font-size: 1.5em;
 	cursor: pointer;
 }
 
@@ -75,7 +75,7 @@
 
 .form-structor .signup .form-title {
 	color: #fff;
-	font-size: 1.7em;
+	font-size: 3em;
 	text-align: center;
 }
 
@@ -102,16 +102,16 @@
 	border: 0;
 	outline: none;
 	box-shadow: none;
-	height: 30px;
+	height: 40px;
 	line-height: 30px;
 	padding: 8px 15px;
 	border-bottom: 1px solid #eee;
 	width: 100%;
-	font-size: 12px;
+	font-size: 15px;
 }
 
 .lbl {
-	font-size: 12px;
+	font-size: 15px;
 }
 
 .form-structor .signup .form-holder .input:last-child {
@@ -128,10 +128,10 @@
 	border: 0;
 	border-radius: 15px;
 	display: block;
-	margin: 15px auto;
+	margin: 30px auto;
 	padding: 15px 45px;
 	width: 100%;
-	font-size: 13px;
+	font-size: 16px;
 	font-weight: bold;
 	cursor: pointer;
 	opacity: 1;
@@ -187,7 +187,7 @@
 
 .form-structor .login .center .form-title {
 	color: #000;
-	font-size: 1.7em;
+	font-size: 3em;
 	text-align: center;
 }
 
@@ -215,12 +215,12 @@
 	border: 0;
 	outline: none;
 	box-shadow: none;
-	height: 30px;
+	height: 40px;
 	line-height: 30px;
 	padding: 8px 15px;
 	border-bottom: 1px solid #eee;
 	width: 100%;
-	font-size: 12px;
+	font-size: 15px;
 }
 
 .form-holder {
@@ -246,10 +246,10 @@
 	border: 0;
 	border-radius: 15px;
 	display: block;
-	margin: 15px auto;
+	margin: 30px auto;
 	padding: 15px 45px;
 	width: 100%;
-	font-size: 13px;
+	font-size: 16px;
 	font-weight: bold;
 	cursor: pointer;
 	opacity: 1;
@@ -287,13 +287,14 @@
 }
 
 .form-structor .login.slide-up .form-title {
-	font-size: 1em;
+	font-size: 1.5em;
 	margin: 0;
 	padding: 0;
 	cursor: pointer;
 	-webkit-transition: all 0.3s ease;
 	transition: all 0.3s ease;
 }
+
 
 .form-structor .login.slide-up .form-title span {
 	margin-right: 5px;
@@ -366,4 +367,9 @@ input:checked+.slider:before {
 
 .slider.round:before {
 	border-radius: 50%;
+}
+
+.Toastify__toast--dark {
+	border-radius: 20px !important;
+	text-align: center !important;
 }

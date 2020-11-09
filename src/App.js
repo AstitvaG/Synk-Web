@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router} from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 import axios from 'axios';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import Enter from './components/enter.component'
 import Main from './components/main.component'
@@ -46,7 +48,7 @@ export default class App extends Component {
 	}
 
 	componentDidMount = () => {
-		if (isMobile()) {this.setState({loading: false});return}
+		if (isMobile()) { this.setState({ loading: false }); return }
 		const token = getToken();
 		if (!token) {
 			return;
@@ -74,6 +76,7 @@ export default class App extends Component {
 					: <div className="container-fluid">
 						<PublicRoute path="/enter" component={Enter} />
 						<PrivateRoute path="/" exact component={Main} />
+						<ToastContainer position="bottom-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 					</div>
 				}
 			</Router>
