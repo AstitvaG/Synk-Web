@@ -61,7 +61,7 @@ export default class Main extends Component {
                 $('div.main-area-header').removeClass('fixed');
             }
         });
-        axios.get('https://web.synk.tools/file/recent/25', { params: { username: this.state.user.username } })
+        axios.get('https://web-synk.azurewebsites.net/file/recent/25', { params: { username: this.state.user.username } })
             .then(response => {
                 this.setState({ fileList: response.data.files });
                 this.groupFiles(response.data.files)
@@ -77,7 +77,7 @@ export default class Main extends Component {
             return messaging.getToken()
         }).then(token => {
             this.setState({ myToken: token })
-            axios.post('https://web.synk.tools/device/add', {
+            axios.post('https://web-synk.azurewebsites.net/device/add', {
                 username: this.state.user.username,
                 token: token,
                 deviceName: this.handleCase(bd.name) + " on " + this.handleCase(bd.os),
@@ -94,7 +94,7 @@ export default class Main extends Component {
     }
 
     getDeviceList = () => {
-        axios.post('https://web.synk.tools/device/', { username: this.state.user.username })
+        axios.post('https://web-synk.azurewebsites.net/device/', { username: this.state.user.username })
             .then(res => {
                 let devList = res.data.devices.filter((data) => data.token !== this.state.myToken)
                 this.setState({ deviceList: devList, deviceLoading: false, deviceSected: devList[0] });
@@ -157,7 +157,7 @@ export default class Main extends Component {
 
     renderDownloadCard = (item, i, j) => {
         return (
-            <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("https://web.synk.tools/file/render/" + item.filename, "_blank")}>
+            <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("https://web-synk.azurewebsites.net/file/render/" + item.filename, "_blank")}>
                 <div className="download-item-icon">
                     {renderFileIcon(fileType(item.name || item.originalName))}
                 </div>
@@ -166,7 +166,7 @@ export default class Main extends Component {
                     <p className="download-text-info">{item.caption}<span>{moment(item.createdAt).format("h:mm A")}</span></p>
                     <p className="download-text-info">To {item.recieverName}<span><i className="fab fa-android"></i></span></p>
                 </div>
-                <a href={"https://web.synk.tools/file/download/" + item.filename} download={item.originalName}>
+                <a href={"https://web-synk.azurewebsites.net/file/download/" + item.filename} download={item.originalName}>
                     <div className="download-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 612">
                             <defs />
@@ -634,7 +634,7 @@ export default class Main extends Component {
             formData.append('senderName', "Website");
             formData.append('file', tempArray[i]);
             formData.append('token', this.state.deviceSected.token);
-            axios.post('https://web.synk.tools/file/', formData, {
+            axios.post('https://web-synk.azurewebsites.net/file/', formData, {
                 onUploadProgress: (e) => {
                     const percent = Math.floor((e.loaded / e.total) * 100);
                     console.log("Upload", i, percent)

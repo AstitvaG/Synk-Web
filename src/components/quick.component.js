@@ -47,7 +47,7 @@ class Quick extends Component {
                                 </div>
                             </div>
                         </div>
-                        <img src={"https://web.synk.tools/file/render/" + fi.filename} />
+                        <img src={"https://web-synk.azurewebsites.net/file/render/" + fi.filename} />
                         <span className="video-time">{fileType(fi.originalName).toUpperCase()}</span>
                     </a>}
                     {se !== undefined && <a className="image-wrapper">
@@ -59,7 +59,7 @@ class Quick extends Component {
                                 </div>
                             </div>
                         </div>
-                        <img src={"https://web.synk.tools/file/render/" + se.filename} />
+                        <img src={"https://web-synk.azurewebsites.net/file/render/" + se.filename} />
                         <span className="video-time">{fileType(se.originalName).toUpperCase()}</span>
                     </a>}
                 </div>
@@ -91,7 +91,7 @@ class Quick extends Component {
                                 <button className="btn-play"></button>
                             </div>
                         </div>
-                        <img src={"https://web.synk.tools/file/render/" + temp.filename} />
+                        <img src={"https://web-synk.azurewebsites.net/file/render/" + temp.filename} />
                         <span className="video-time">{fileType(temp.originalName).toUpperCase()}</span>
                     </a>
                 </div>
