@@ -55,7 +55,9 @@ a {
 	width: 100%;
 	height: 100%;
 	max-width: 1200px;
-	max-height: 900px;
+	max-height: 874px;
+	min-width: 1200px;
+	min-height: 874px;
 	background: linear-gradient(180deg, rgba(224, 233, 253, 1) 0%, rgba(233, 236, 241, 1) 90%);
 	box-shadow: 0 0 0 10px rgba(255, 255, 255, .4);
 	display: flex;
@@ -113,7 +115,7 @@ a {
 .main-area {
 	flex: 1;
 	height: 100%;
-	overflow-y: auto;
+	overflow-y: overlay;
 	background: linear-gradient(97deg, rgba(242, 247, 253, 1) 0%, rgba(240, 244, 253, 1) 90%);
 	border-radius: 0 10px 10px 0;
 	padding-bottom: 24px;
@@ -226,6 +228,7 @@ a {
 	align-items: center;
 	flex-direction: column;
 	padding: 8px;
+	cursor: pointer;
 }
 
 .access-link-wrapper:nth-child(1) .access-icon {
@@ -280,10 +283,15 @@ a {
 	border-radius: 12px;
 	overflow: hidden;
 	width: 100%;
-	height: auto;
+	min-width: 160px;
+	height: 280px;
 	position: relative;
 	flex-basis: 48%;
 	display: flex;
+}
+
+.image-wrapper.big {
+	min-width: 347px;
 }
 
 .image-wrapper img {
@@ -294,7 +302,28 @@ a {
 }
 
 .image-wrapper:hover img {
-	transform: scale(1.125);
+	transform: scale(1.225);
+}
+
+.bim {
+	display: none !important;
+}
+
+.base-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: 0.2s ease-in;
+}
+
+.image-wrapper:hover .base-image {
+	transform: scale(1.225);
+}
+
+.mv {
+	margin-top: 20px;
+	margin-bottom: 20px;
+	width: 718px;
 }
 
 .image-overlay {
@@ -905,6 +934,10 @@ a {
 		width: 36px;
 		height: 36px;
 	}
+}
+
+.selectable {
+	cursor: pointer;
 }
 
 @media screen and (max-width: 768px) {

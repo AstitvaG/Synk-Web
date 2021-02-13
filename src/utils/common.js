@@ -56,6 +56,8 @@ export const getFileType = (ext) => {
 export const renderFileIcon = (ext, size = 40) => {
     var col, ico
     switch (getFileType(ext)) {
+        case 0:
+            col = '#555555', ico = "far fa-file-archive"
         case 1:
             col = '#C13584', ico = "far fa-file-image"
             break
@@ -97,4 +99,9 @@ export const renderFileIcon = (ext, size = 40) => {
             <i className={ico + " m-auto"} style={{ fontSize: (size * 1.33 / 40) + "em" }}></i>
         </div>
     )
+}
+
+export const fileType = (fileName) => {
+    var val = fileName.substring(fileName.lastIndexOf('.') + 1, fileName.length);
+    return val.length < 10 ? val : ""
 }

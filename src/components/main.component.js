@@ -4,7 +4,7 @@ import axios from 'axios';
 import './main.component.css';
 import $ from 'jquery';
 import moment from 'moment';
-import { getUser, removeUserSession, parseDate, renderFileIcon } from '../utils/common';
+import { getUser, removeUserSession, parseDate, renderFileIcon, fileType } from '../utils/common';
 import ClipLoader from "react-spinners/ClipLoader";
 import firebase from '../firebase'
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
@@ -13,6 +13,8 @@ import SimpleBar from 'simplebar-react';
 import SettingsModal from './settings.component';
 import 'simplebar/dist/simplebar.min.css';
 import ReactTooltip from 'react-tooltip';
+import { toast } from 'react-toastify';
+import Quick from './quick.component';
 
 
 export default class Main extends Component {
@@ -40,7 +42,9 @@ export default class Main extends Component {
             deviceSected: '',
             myToken: '',
             settingsModal: false,
+            typeSelected: null,
         }
+        this.inputRef = React.createRef();
     }
 
     handleCase = (str) => {
@@ -125,6 +129,10 @@ export default class Main extends Component {
         this.setState({ recGrouped: ret })
     }
 
+    filter = (type) => {
+        this.setState({ typeSelected: type })
+    }
+
 
     renderUploadCard = (item, idx) => {
         return (
@@ -151,7 +159,7 @@ export default class Main extends Component {
         return (
             <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("https://web.synk.tools/file/render/" + item.filename, "_blank")}>
                 <div className="download-item-icon">
-                    {renderFileIcon(this.fileType(item.name || item.originalName))}
+                    {renderFileIcon(fileType(item.name || item.originalName))}
                 </div>
                 <div className="download-item-texts">
                     <p className="download-text-header">{item.originalName || item.name}</p>
@@ -166,6 +174,84 @@ export default class Main extends Component {
                         </svg>
                     </div>
                 </a>
+            </div>
+        )
+    }
+
+
+    renderDrop = () => {
+        return (
+            <div className="drop-container" style={{
+                display: this.state.drag > 0 || this.state.selectedFiles.length > 0 ? 'flex' : 'none',
+            }}
+            >
+                {this.state.drag > 0 && <div className="drop-message">Drop files here</div>}
+                <input
+                    // className="file-input"
+                    type="file"
+                    multiple
+                    ref={this.inputRef}
+                    style={{ display: "none" }}
+                    onChange={(event) => {
+                        this.handleFiles(event.target.files)
+                    }}
+                />
+                {this.state.selectedFiles.length > 0 && <p className="upload-message">Files Selected</p>}
+                {this.state.selectedFiles.length > 1 && <p className="drop-message" style={{ top: "115px" }}>{this.state.selectedFiles.length} files selected</p>}
+                <div className="file-display-container">
+                    {
+                        this.state.selectedFiles.map((data, i) =>
+                            <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: "white" }}
+                                onMouseEnter={() => this.setState({ closeIcon: i })}
+                                onMouseLeave={() => this.setState({ closeIcon: -1 })}
+                                onClick={() => this.removeFile(data.name)}>
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        {this.state.closeIcon != i
+                                            ? renderFileIcon(fileType(data.name), 50)
+                                            : renderFileIcon("close-icon", 50)
+                                        }
+                                        <div className="mb-3 mb-sm-0 ml-3">
+                                            <p className="font-weight-bold mb-0 text-truncate"
+                                                style={{ maxWidth: "240px" }}>{data.name}</p>
+                                            <small className="text-secondary text-truncate">{fileType(data.name).toUpperCase() || "Executable"} file</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</p>
+                            </div>
+                        )
+                    }
+                </div>
+                {this.state.selectedFiles.length > 0 && <p className="device-message">Select Device</p>}
+                {this.state.selectedFiles.length > 0 && <div className="device-display-container">
+                    {
+                        !this.state.deviceLoading && this.state.deviceList.map((data, i) =>
+                            <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: this.state.deviceSected == data ? "#c1f7f7" : "white" }}
+                                onClick={() => this.setState({ deviceSected: this.state.deviceList[i] })}>
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <div className="d-flex justify-content-between align-items-center">
+                                        {renderFileIcon(data.name, 50)}
+                                        <div className="mb-3 mb-sm-0 ml-3">
+                                            <p className="font-weight-bold mb-0 text-truncate"
+                                                style={{ maxWidth: "240px" }}>{data.name}</p>
+                                            {this.state.deviceSected == data && <small className="text-secondary text-truncate">Selected</small>}
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* <p className="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</p> */}
+                            </div>
+                        )
+                    }
+                </div>}
+                {this.state.selectedFiles.length > 0 && <button className="btnx mt-4 mx-auto d-block" onClick={() => { this.uploadFiles() }}>
+                    <span className="circle">
+                        <span className="icon arrow"></span>
+                    </span>
+                    <div className="button-text h-100">
+                        <p className="d-block my-auto" align="center">Upload Files</p>
+                    </div>
+                </button>}
             </div>
         )
     }
@@ -193,148 +279,78 @@ export default class Main extends Component {
                     </svg>
                 </a>
                 <a className={`item-link ${this.state.activeTab === 2 ? 'active' : ''}`} id="pageLink" onClick={(e) => { this.setState({ activeTab: 2 }) }}>
-                    <i class="lar la-folder la-2x"></i>
+                    <i className="lar la-folder la-2x"></i>
                 </a>
-                <a className="item-link" id="pageLink" onClick={(e) => { this.setState({ activeTab: 3 }) }}>
-                    <i class="las la-plus la-2x" />
+                <a className="item-link" data-tip="Add file(s)" id="pageLink" onClick={(e) => { this.inputRef.current.click() }}>
+                    <i className="las la-plus la-2x" />
                 </a>
                 <a className="item-link" data-tip="Settings" onClick={() => this.setState({ settingsModal: true })} id="pageLink">
-                    <i class="las la-cog la-2x"></i>
+                    <i className="las la-cog la-2x"></i>
                 </a>
-                <button className="btn-logout" onClick={this.onLogout}>
+                <a className="btn-logout" data-tip="Logout" onClick={this.onLogout}>
                     <svg
                         xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" className="feather feather-log-out" viewBox="0 0 24 24">
                         <defs />
                         <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" /> </svg>
-                </button>
+                </a>
             </div>
         )
     }
 
     renderCenter = () => {
         return (
-            <div className={`main-area`}
+            <div className="main-area"
                 onDragOver={this.dragOver}
                 onDragEnter={this.dragEnter}
                 onDragLeave={this.dragLeave}
                 onDrop={this.fileDrop}
             >
-                <div className="drop-container" style={{
-                    display: this.state.drag > 0 || this.state.selectedFiles.length > 0 ? 'flex' : 'none',
-                }}
-                >
-                    {this.state.drag > 0 && <div className="drop-message">Drop files here</div>}
-                    <input
-                        // className="file-input"
-                        type="file"
-                        multiple
-                        style={{ display: "none" }}
-                        onChange={(event) => {
-                            this.handleFiles(event.target.files)
-                        }}
-                    />
-                    {this.state.selectedFiles.length > 0 && <p className="upload-message">Files Selected</p>}
-                    {this.state.selectedFiles.length > 1 && <p className="drop-message" style={{ top: "115px" }}>{this.state.selectedFiles.length} files selected</p>}
-                    <div className="file-display-container">
-                        {
-                            this.state.selectedFiles.map((data, i) =>
-                                <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: "white" }}
-                                    onMouseEnter={() => this.setState({ closeIcon: i })}
-                                    onMouseLeave={() => this.setState({ closeIcon: -1 })}
-                                    onClick={() => this.removeFile(data.name)}>
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            {this.state.closeIcon != i
-                                                ? renderFileIcon(this.fileType(data.name), 50)
-                                                : renderFileIcon("close-icon", 50)
-                                            }
-                                            <div className="mb-3 mb-sm-0 ml-3">
-                                                <p className="font-weight-bold mb-0 text-truncate"
-                                                    style={{ maxWidth: "240px" }}>{data.name}</p>
-                                                <small className="text-secondary text-truncate">{this.fileType(data.name).toUpperCase() || "Executable"} file</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p className="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</p>
-                                </div>
-                            )
-                        }
+                {this.renderDrop()}
+                <button className="btn-show-right-area" onClick={(e) => { this.setState({ showRight: true }) }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-chevron-left">
+                        <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                </button>
+                <button className="btn-show-left-area" onClick={(e) => { this.setState({ showLeft: true }) }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                    </svg>
+                </button>
+                <div className="main-area-header">
+                    <div className="search-wrapper" id="searchLine">
+                        <input className="search-input" type="text" placeholder={this.state.typeSelected ? "Search " + this.state.typeSelected : "Search e.g. files.doc"} />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-search" viewBox="0 0 24 24">
+                            <defs />
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="M21 21l-4.35-4.35" /> </svg>
                     </div>
-                    {this.state.selectedFiles.length > 0 && <p className="device-message">Select Device</p>}
-                    {this.state.selectedFiles.length > 0 && <div className="device-display-container">
-                        {
-                            !this.state.deviceLoading && this.state.deviceList.map((data, i) =>
-                                <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: this.state.deviceSected == data ? "#c1f7f7" : "white" }}
-                                    onClick={() => this.setState({ deviceSected: this.state.deviceList[i] })}>
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            {renderFileIcon(data.name, 50)}
-                                            <div className="mb-3 mb-sm-0 ml-3">
-                                                <p className="font-weight-bold mb-0 text-truncate"
-                                                    style={{ maxWidth: "240px" }}>{data.name}</p>
-                                                {this.state.deviceSected == data && <small className="text-secondary text-truncate">Selected</small>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* <p className="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</p> */}
-                                </div>
-                            )
-                        }
-                    </div>}
-                    {this.state.selectedFiles.length > 0 && <button className="btnx mt-4 mx-auto d-block" onClick={() => { this.uploadFiles() }}>
-                        <span className="circle">
-                            <span className="icon arrow"></span>
-                        </span>
-                        <div className="button-text h-100">
-                            <p className="d-block my-auto" align="center">Upload Files</p>
-                        </div>
-                    </button>}
                 </div>
-                <div style={{ visibility: this.state.drag > 0 ? "hidden" : "visible" }}>
-                    <button className={`btn-show-right-area`} onClick={(e) => { this.setState({ showRight: true }) }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-chevron-left">
-                            <polyline points="15 18 9 12 15 6" />
-                        </svg>
-                    </button>
-                    <button className={`btn-show-left-area`} onClick={(e) => { this.setState({ showLeft: true }) }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="3" y1="12" x2="21" y2="12" />
-                            <line x1="3" y1="6" x2="21" y2="6" />
-                            <line x1="3" y1="18" x2="21" y2="18" />
-                        </svg>
-                    </button>
-                    <div className={`main-area-header`}>
-                        <div className="search-wrapper" id="searchLine">
-                            <input className="search-input" type="text" placeholder="e.g. files.doc" />
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-search" viewBox="0 0 24 24">
-                                <defs />
-                                <circle cx="11" cy="11" r="8" />
-                                <path d="M21 21l-4.35-4.35" /> </svg>
-                        </div>
-                    </div>
-                    <section className={`content-section`}>
+                <div style={{ visibility: (this.state.drag > 0 || this.state.typeSelected != null) ? "hidden" : "visible" }}>
+                    <section className="content-section">
                         <h1 className="section-header">Quick Access</h1>
                         <div className="access-links">
-                            {/* Images */}     <div className="access-link-wrapper">
+                            {/* Images */}     <div className="access-link-wrapper" onClick={() => this.filter("Images")}>
                                 <div className="access-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-image">
                                         <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                         <circle cx="8.5" cy="8.5" r="1.5" />
                                         <polyline points="21 15 16 10 5 21" /> </svg>
                                 </div> <span className="access-text">Images</span> </div>
-                            {/* Music */}      <div className="access-link-wrapper">
+                            {/* Music */}      <div className="access-link-wrapper" onClick={() => this.filter("Music")}>
                                 <div className="access-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-music">
                                         <path d="M9 18V5l12-2v13" />
                                         <circle cx="6" cy="18" r="3" />
                                         <circle cx="18" cy="16" r="3" /> </svg>
                                 </div> <span className="access-text">Music</span> </div>
-                            {/* Video */}      <div className="access-link-wrapper">
+                            {/* Videos */}      <div className="access-link-wrapper" onClick={() => this.filter("Videos")}>
                                 <div className="access-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-play">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-play">
                                         <polygon points="5 3 19 12 5 21 5 3" /> </svg>
-                                </div> <span className="access-text">Video</span> </div>
-                            {/* Docs */}       <div className="access-link-wrapper">
+                                </div> <span className="access-text">Videos</span> </div>
+                            {/* Docs */}       <div className="access-link-wrapper" onClick={() => this.filter("Docs")}>
                                 <div className="access-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-align-left">
                                         <line x1="17" y1="10" x2="3" y2="10" />
@@ -342,27 +358,24 @@ export default class Main extends Component {
                                         <line x1="21" y1="14" x2="3" y2="14" />
                                         <line x1="17" y1="18" x2="3" y2="18" /> </svg>
                                 </div> <span className="access-text">Docs</span> </div>
-                            {/* Apps */}       <div className="access-link-wrapper">
+                            {/* Apps */}       <div className="access-link-wrapper" onClick={() => this.filter("Apps")}>
                                 <div className="access-icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-layers">
                                         <polygon points="12 2 2 7 12 12 22 7 12 2" />
                                         <polyline points="2 17 12 22 22 17" />
                                         <polyline points="2 12 12 17 22 12" /> </svg>
                                 </div> <span className="access-text">Apps</span> </div>
-                            {/* Download */}   <div className="access-link-wrapper">
+                            {/* Compressed */}   <div className="access-link-wrapper" onClick={() => this.filter("Compressed")}>
                                 <div className="access-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-arrow-down-circle">
-                                        <circle cx="12" cy="12" r="10" />
-                                        <polyline points="8 12 12 16 16 12" />
-                                        <line x1="12" y1="8" x2="12" y2="16" /> </svg>
-                                </div> <span className="access-text">Download</span> </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-package"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                                </div> <span className="access-text">Compressed</span> </div>
                         </div>
                     </section>
-                    <section className={`content-section`}>
+                    <section className="content-section">
                         <div className="section-header-wrapper">
-                            <h1 className="section-header">Preview</h1> <a className="section-header-link">
-                                View in folders
-                </a> </div>
+                            <h1 className="section-header">Preview</h1>
+                            <a className="section-header-link">View in folders</a>
+                        </div>
                         <div className="content-section-line">
                             <div className="section-part left">
                                 <a className="image-wrapper">
@@ -375,7 +388,9 @@ export default class Main extends Component {
                                             <button className="btn-play"></button>
                                         </div>
                                     </div>
-                                    <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2251&q=80" /> <span className="video-time">10:32</span> </a>
+                                    <img src="https://images.unsplash.com/photo-1515552726023-7125c8d07fb3?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" />
+                                    <span className="video-time">02:35</span>
+                                </a>
                             </div>
                             <div className="section-part right">
                                 <div className="content-part-line">
@@ -388,7 +403,9 @@ export default class Main extends Component {
                                                 </div>
                                             </div>
                                         </div>
-                                        <img src="https://images.unsplash.com/photo-1515552726023-7125c8d07fb3?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" /> <span className="video-time">02:35</span> </a>
+                                        <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2251&q=80" />
+                                        <span className="video-time">10:32</span>
+                                    </a>
                                     <a className="image-wrapper">
                                         <div className="image-overlay">
                                             <div className="video-info">
@@ -398,12 +415,14 @@ export default class Main extends Component {
                                                 </div>
                                             </div>
                                         </div>
-                                        <img src="https://images.unsplash.com/photo-1542359649-31e03cd4d909?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" /> <span className="video-time">04:15</span> </a>
+                                        <img src="https://images.unsplash.com/photo-1542359649-31e03cd4d909?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" />
+                                        <span className="video-time">04:15</span>
+                                    </a>
                                 </div>
                             </div>
                         </div>
                     </section>
-                    <section className={`content-section`}>
+                    <section className="content-section">
                         <div className="section-header-wrapper">
                             <h1 className="section-header">Recent Files</h1>
                             <a className="section-header-link">
@@ -437,6 +456,14 @@ export default class Main extends Component {
                         </div>
                     </section>
                 </div>
+                {(this.state.drag === 0 && this.state.typeSelected !== null) &&
+                    <div style={{ position: "absolute", top: 90 }}>
+                        <section className="content-section">
+                            <h1 className="section-header selectable" onClick={() => this.filter(null)}><i className="fas fa-chevron-left" />{" "} Quick Access: {this.state.typeSelected}</h1>
+                            <Quick typeSelected={this.state.typeSelected} fileList={this.state.fileList} />
+                        </section>
+                    </div>
+                }
             </div>)
     }
 
@@ -515,6 +542,7 @@ export default class Main extends Component {
 
     onLogout = () => {
         removeUserSession();
+        toast.dark('👋 Logged out!');
         this.props.history.push('/enter');
     }
 

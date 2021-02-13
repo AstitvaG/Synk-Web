@@ -167,7 +167,7 @@ export default class Enter extends Component {
                                     }
                                 </a>
                             </div>
-                            <button onClick={this.onSignup} className="submit-btn">
+                            <button className="submit-btn">
                                 {!this.state.loading
                                     ? "Sign up"
                                     : <ClipLoader size={15} color="white" />
@@ -189,7 +189,7 @@ export default class Enter extends Component {
                                         value={this.state.password}
                                         onChange={(e) => this.onChangePassword(e, false)} />
                                 </div>
-                                <button onClick={this.onLogin} className="submit-btn">
+                                <button className="submit-btn">
                                     {!this.state.loading
                                         ? "Log in"
                                         : <ClipLoader size={15} color="white" />
