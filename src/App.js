@@ -54,7 +54,7 @@ export default class App extends Component {
 			return;
 		}
 
-		axios.get(`https://web-synk.azurewebsites.net/auth/verifyToken?token=${token}`).then(response => {
+		axios.get(`http://localhost:7000/auth/verifyToken?token=${token}`).then(response => {
 			setUserSession(response.data.token, response.data.user);
 			this.setState({ loading: false });
 		}).catch(error => {

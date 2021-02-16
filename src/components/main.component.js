@@ -15,7 +15,7 @@ import 'simplebar/dist/simplebar.min.css';
 import ReactTooltip from 'react-tooltip';
 import { toast } from 'react-toastify';
 import Quick from './quick.component';
-
+import Resizer from 'react-image-file-resizer';
 
 export default class Main extends Component {
 
@@ -61,7 +61,7 @@ export default class Main extends Component {
                 $('div.main-area-header').removeClass('fixed');
             }
         });
-        axios.get('https://web-synk.azurewebsites.net/file/recent/25', { params: { username: this.state.user.username } })
+        axios.get('http://localhost:7000/file/recent/25', { params: { username: this.state.user.username } })
             .then(response => {
                 this.setState({ fileList: response.data.files });
                 this.groupFiles(response.data.files)
@@ -77,7 +77,7 @@ export default class Main extends Component {
             return messaging.getToken()
         }).then(token => {
             this.setState({ myToken: token })
-            axios.post('https://web-synk.azurewebsites.net/device/add', {
+            axios.post('http://localhost:7000/device/add', {
                 username: this.state.user.username,
                 token: token,
                 deviceName: this.handleCase(bd.name) + " on " + this.handleCase(bd.os),
@@ -94,7 +94,7 @@ export default class Main extends Component {
     }
 
     getDeviceList = () => {
-        axios.post('https://web-synk.azurewebsites.net/device/', { username: this.state.user.username })
+        axios.post('http://localhost:7000/device/', { username: this.state.user.username })
             .then(res => {
                 let devList = res.data.devices.filter((data) => data.token !== this.state.myToken)
                 this.setState({ deviceList: devList, deviceLoading: false, deviceSected: devList[0] });
@@ -157,7 +157,7 @@ export default class Main extends Component {
 
     renderDownloadCard = (item, i, j) => {
         return (
-            <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("https://web-synk.azurewebsites.net/file/render/" + item.filename, "_blank")}>
+            <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("http://localhost:7000/file/render/" + item.filename, "_blank")}>
                 <div className="download-item-icon">
                     {renderFileIcon(fileType(item.name || item.originalName))}
                 </div>
@@ -166,7 +166,7 @@ export default class Main extends Component {
                     <p className="download-text-info">{item.caption}<span>{moment(item.createdAt).format("h:mm A")}</span></p>
                     <p className="download-text-info">To {item.recieverName}<span><i className="fab fa-android"></i></span></p>
                 </div>
-                <a href={"https://web-synk.azurewebsites.net/file/download/" + item.filename} download={item.originalName}>
+                <a href={"http://localhost:7000/file/download/" + item.filename} download={item.originalName}>
                     <div className="download-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 612">
                             <defs />
@@ -271,18 +271,21 @@ export default class Main extends Component {
                     onHide={() => this.setState({ settingsModal: false })}
                 />
                 <div className="app-name">Synk</div>
-                <a className={`item-link ${this.state.activeTab === 1 ? 'active' : ''}`} id="pageLink" onClick={(e) => { this.setState({ activeTab: 1 }) }}>
+                <a className={`item-link ${this.state.activeTab === 1 && this.state.selectedFiles.length == 0 ? 'active' : ''}`} id="pageLink" data-tip="Home" onClick={(e) => { this.setState({ activeTab: 1 }) }}>
                     <svg
                         xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" className="feather feather-grid" viewBox="0 0 24 24">
                         <defs />
                         <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
                     </svg>
                 </a>
-                <a className={`item-link ${this.state.activeTab === 2 ? 'active' : ''}`} id="pageLink" onClick={(e) => { this.setState({ activeTab: 2 }) }}>
+                <a className={`item-link ${this.state.activeTab === 2 ? 'active' : ''}`} id="pageLink" data-tip="Vault" onClick={(e) => { this.setState({ activeTab: 2 }) }}>
                     <i className="lar la-folder la-2x"></i>
                 </a>
-                <a className="item-link" data-tip="Add file(s)" id="pageLink" onClick={(e) => { this.inputRef.current.click() }}>
+                <a className={`item-link ${this.state.selectedFiles.length > 0 ? 'active' : ''}`} data-tip="Add file(s)" id="pageLink" onClick={(e) => { this.inputRef.current.click() }}>
                     <i className="las la-plus la-2x" />
+                </a>
+                <a className={`item-link ${this.state.activeTab === 3 ? 'active' : ''}`} data-tip="Send Text" id="pageLink" onClick={(e) => { this.setState({ activeTab: 3 }) }}>
+                    <i className="las la-quote-right la-2x"></i>
                 </a>
                 <a className="item-link" data-tip="Settings" onClick={() => this.setState({ settingsModal: true })} id="pageLink">
                     <i className="las la-cog la-2x"></i>
@@ -575,14 +578,16 @@ export default class Main extends Component {
 
     handleFiles = (files) => {
         let tempArray = this.state.selectedFiles
-        let tempUrl = this.state.UrlArray
         for (let i = 0; i < files.length; i++) {
-            tempArray.push(files[i])
-            let reader = new FileReader();
-            reader.onload = (e) => { tempUrl.push(e.target.result) }
-            reader.readAsDataURL(files[i]);
+            if (files[i].type.toLowerCase().includes("image"))
+                Resizer.imageFileResizer(files[i], 500, 500, 'JPEG', 100, 0,
+                    uri => { files[i].thumb = uri; tempArray.push(files[i]); console.log(tempArray) },
+                    'base64'
+                );
+            else
+                tempArray.push(files[i])
         }
-        this.setState({ selectedFiles: tempArray, UrlArray: tempUrl })
+        this.setState({ selectedFiles: tempArray })
     }
 
     fileSize = (size) => {
@@ -634,7 +639,8 @@ export default class Main extends Component {
             formData.append('senderName', "Website");
             formData.append('file', tempArray[i]);
             formData.append('token', this.state.deviceSected.token);
-            axios.post('https://web-synk.azurewebsites.net/file/', formData, {
+            formData.append('thumb', tempArray[i]?.thumb ?? "")
+            axios.post('http://localhost:7000/file/', formData, {
                 onUploadProgress: (e) => {
                     const percent = Math.floor((e.loaded / e.total) * 100);
                     console.log("Upload", i, percent)
