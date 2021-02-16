@@ -6,7 +6,7 @@ export default function SettingsModal(props) {
     let [devices, setDevices] = useState([]);
 
     useEffect(() => {
-        axios.post('http://localhost:7000/device/', { username: props.user.username })
+        axios.post('https://web-synk.azurewebsites.net/device/', { username: props.user.username })
             .then(res => {
                 setDevices(res.data.devices);
             })

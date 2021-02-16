@@ -60,7 +60,7 @@ export default class Main extends Component {
                 $('div.main-area-header').removeClass('fixed');
             }
         });
-        axios.get('http://localhost:7000/file/recent/25', { params: { username: this.state.user.username } })
+        axios.get('https://web-synk.azurewebsites.net/file/recent/25', { params: { username: this.state.user.username } })
             .then(response => {
                 this.setState({ fileList: response.data.files });
                 this.groupFiles(response.data.files)
@@ -81,7 +81,7 @@ export default class Main extends Component {
             return messaging.getToken()
         }).then(token => {
             this.setState({ myToken: token })
-            axios.post('http://localhost:7000/device/add', {
+            axios.post('https://web-synk.azurewebsites.net/device/add', {
                 username: this.state.user.username,
                 token: token,
                 deviceName: this.handleCase(bd.name) + " on " + this.handleCase(bd.os),
@@ -98,7 +98,7 @@ export default class Main extends Component {
     }
 
     getDeviceList = () => {
-        axios.post('http://localhost:7000/device/', { username: this.state.user.username })
+        axios.post('https://web-synk.azurewebsites.net/device/', { username: this.state.user.username })
             .then(res => {
                 let devList = res.data.devices.filter((data) => data.token !== this.state.myToken)
                 this.setState({ deviceList: devList, deviceLoading: false, deviceSected: devList[0] });
@@ -162,7 +162,7 @@ export default class Main extends Component {
 
     renderDownloadCard = (item, i, j) => {
         return (
-            <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("http://localhost:7000/file/render/" + item.filename, "_blank")}>
+            <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("https://web-synk.azurewebsites.net/file/render/" + item.filename, "_blank")}>
                 <div className="download-item-icon">
                     {renderFileIcon(fileType(item.name || item.originalName))}
                 </div>
@@ -171,7 +171,7 @@ export default class Main extends Component {
                     <p className="download-text-info">{item.caption}<span>{moment(item.createdAt).format("h:mm A")}</span></p>
                     <p className="download-text-info">To {item.recieverName}<span><i className="fab fa-android"></i></span></p>
                 </div>
-                <a href={"http://localhost:7000/file/download/" + item.filename} download={item.originalName}>
+                <a href={"https://web-synk.azurewebsites.net/file/download/" + item.filename} download={item.originalName}>
                     <div className="download-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 612">
                             <defs />
@@ -348,7 +348,6 @@ export default class Main extends Component {
             </div>)
     }
 
-    onChangeDraftjs = editorState => this.setState({ editorState })
     renderSendText = () => {
         return (
             <section className="content-section mt-2">
@@ -359,7 +358,7 @@ export default class Main extends Component {
                     </a> */}
                 </div>
                 <div className="draftjs">
-                    <textarea placeholder={"Write your text here \n···"} autoFocus="true" spellCheck="true" wrap="soft"></textarea>
+                    <textarea ref={r => this.sendTexRef = r} placeholder={"Write your text here \n···"} autoFocus={true} spellCheck={true} wrap="soft"></textarea>
                 </div>
                 <div className="section-header-wrapper mt-3">
                     <h1 className="section-header">Select device</h1>
@@ -370,10 +369,10 @@ export default class Main extends Component {
                 {this.state.selectedFiles.length >= 0 && <div className="device-display-container">
                     {
                         !this.state.deviceLoading && this.state.deviceList.map((data, i) =>
-                            <div key={i} className="device-view" style={{ background: data.platform == 1 ? "#defae7" : (data.platform == 0 || data.name.endsWith("on Mac")) ? "#ddd" : data.name.endsWith("on Linux") ? "#f7ecdc" : "#dae6f5" }}
+                            <div key={i} className={`device-view ${this.state.deviceSected == data ? "" : "notsel"}`} style={{ background: this.state.deviceSected == data ? "#c1f7f7" : data.platform == 1 ? "#defae7" : (data.platform == 0 || data.name.endsWith("on Mac")) ? "#ddd" : data.name.endsWith("on Linux") ? "#f7ecdc" : "#dae6f5" }}
                                 onClick={() => this.setState({ deviceSected: this.state.deviceList[i] })}>
                                 {/* {renderFileIcon(data.name, 50)} */}
-                                <i style={{ color: "#555" }} class={`las la-${data.platform != 2 ? "mobile" : "laptop"} la-3x`} />
+                                <i style={{ color: "#555" }} className={`las la-${data.platform != 2 ? "mobile" : "laptop"} la-3x`} />
                                 <p id="device-name" className="font-weight-light mt-2 mb-0"
                                     style={{ maxWidth: "90%", lineHeight: "18px" }}>{data.name}</p>
                             </div>
@@ -381,7 +380,29 @@ export default class Main extends Component {
                     }
                 </div>}
                 <div className="d-flex justify-content-center">
-                    {this.state.selectedFiles.length >= 0 && <button className="btnx mt-4 mx-auto d-block" style={{ alignSelf: 'center' }} onClick={() => { this.uploadFiles() }}>
+                    {this.state.selectedFiles.length >= 0 && <button className="btnx mt-4 mx-auto d-block" style={{ alignSelf: 'center' }} onClick={() => {
+                        if (this.sendTexRef == null || this.sendTexRef.value.trim() == "") {
+                            toast.dark('❗ Text field is empty!');
+                            return
+                        }
+                        let text = this.sendTexRef.value;
+
+                        axios.post('https://web-synk.azurewebsites.net/text/', {
+                            username : this.state.user.username,
+                            recieverName : this.state.deviceSected.name,
+                            senderName : "Website",
+                            text : text,
+                            token : this.state.deviceSected.token,
+                            title : 'Recievd a message from Synk Web',
+                            body : text,
+                            content : JSON.stringify({ caption: text }),
+                        })
+                            .then(() => toast.dark('🙌 Message sent!'))
+                            .catch((err) => {
+                                toast.dark('❗ Message could not be sent! :'+err)
+                            })
+
+                    }}>
                         <span className="circle">
                             <span className="icon arrow"></span>
                         </span>
@@ -699,7 +720,7 @@ export default class Main extends Component {
             formData.append('file', tempArray[i]);
             formData.append('token', this.state.deviceSected.token);
             formData.append('thumb', tempArray[i]?.thumb ?? "")
-            axios.post('http://localhost:7000/file/', formData, {
+            axios.post('https://web-synk.azurewebsites.net/file/', formData, {
                 onUploadProgress: (e) => {
                     const percent = Math.floor((e.loaded / e.total) * 100);
                     console.log("Upload", i, percent)
