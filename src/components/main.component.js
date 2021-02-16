@@ -22,7 +22,8 @@ export default class Main extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            activeTab: 1,
+            activeTab: 3,
+            tabType: '',
             showLeft: false,
             showRight: false,
             fileList: [],
@@ -31,9 +32,8 @@ export default class Main extends Component {
             drag: 0,
             user: getUser(),
             recieverName: '',
-            caption: '',
             selectedFiles: [],
-            UrlArray: [],
+            caption: '',
             closeIcon: -1,
             uploadArray: [],
             countDone: 0,
@@ -42,7 +42,6 @@ export default class Main extends Component {
             deviceSected: '',
             myToken: '',
             settingsModal: false,
-            typeSelected: null,
         }
         this.inputRef = React.createRef();
     }
@@ -67,6 +66,11 @@ export default class Main extends Component {
                 this.groupFiles(response.data.files)
             })
             .catch(err => console.log(err));
+        var url = new URL(window.location.href);
+        var tab = (url.searchParams.get("tab") || "").toLowerCase();
+        if (tab != null && ['images', 'music', 'videos', 'docs', 'apps', 'compressed'].includes(tab))
+            this.setState({ activeTab: 2, tabType: this.handleCase(tab) })
+        console.log(tab);
     }
 
     registerPushMessaging = async () => {
@@ -130,7 +134,8 @@ export default class Main extends Component {
     }
 
     filter = (type) => {
-        this.setState({ typeSelected: type })
+        this.props.history.push("/?tab=" + type.toLowerCase())
+        this.setState({ activeTab: 2, tabType: type })
     }
 
 
@@ -321,153 +326,207 @@ export default class Main extends Component {
                         <line x1="3" y1="18" x2="21" y2="18" />
                     </svg>
                 </button>
-                <div className="main-area-header">
+                {this.state.activeTab !== 3 && <div className="main-area-header">
                     <div className="search-wrapper" id="searchLine">
-                        <input className="search-input" type="text" placeholder={this.state.typeSelected ? "Search " + this.state.typeSelected : "Search e.g. files.doc"} />
+                        <input className="search-input" type="text" placeholder={this.state.tabType != "" ? "Search " + this.state.tabType : "Search e.g. files.doc"} />
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="feather feather-search" viewBox="0 0 24 24">
                             <defs />
                             <circle cx="11" cy="11" r="8" />
                             <path d="M21 21l-4.35-4.35" /> </svg>
                     </div>
+                </div>}
+                {this.state.activeTab === 1 && this.renderHome()}
+                {(this.state.drag === 0 && this.state.activeTab == 2 && this.state.tabType != "") &&
+                    <div style={{ position: "absolute", top: 90 }}>
+                        <section className="content-section">
+                            <h1 className="section-header selectable" onClick={() => { this.props.history.push('/'); this.setState({ activeTab: 1, tabType: '' }) }}><i className="fas fa-chevron-left" />{" "} Quick Access: {this.state.tabType}</h1>
+                            <Quick typeSelected={this.state.tabType} fileList={this.state.fileList} />
+                        </section>
+                    </div>
+                }
+                {this.state.activeTab === 3 && this.renderSendText()}
+            </div>)
+    }
+
+    onChangeDraftjs = editorState => this.setState({ editorState })
+    renderSendText = () => {
+        return (
+            <section className="content-section mt-2">
+                <div className="section-header-wrapper mt-5">
+                    <h1 className="section-header">Send Text</h1>
+                    {/* <a className="section-header-link">
+                        View All
+                    </a> */}
                 </div>
-                <div style={{ visibility: (this.state.drag > 0 || this.state.typeSelected != null) ? "hidden" : "visible" }}>
-                    <section className="content-section">
-                        <h1 className="section-header">Quick Access</h1>
-                        <div className="access-links">
-                            {/* Images */}     <div className="access-link-wrapper" onClick={() => this.filter("Images")}>
-                                <div className="access-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-image">
-                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                                        <circle cx="8.5" cy="8.5" r="1.5" />
-                                        <polyline points="21 15 16 10 5 21" /> </svg>
-                                </div> <span className="access-text">Images</span> </div>
-                            {/* Music */}      <div className="access-link-wrapper" onClick={() => this.filter("Music")}>
-                                <div className="access-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-music">
-                                        <path d="M9 18V5l12-2v13" />
-                                        <circle cx="6" cy="18" r="3" />
-                                        <circle cx="18" cy="16" r="3" /> </svg>
-                                </div> <span className="access-text">Music</span> </div>
-                            {/* Videos */}      <div className="access-link-wrapper" onClick={() => this.filter("Videos")}>
-                                <div className="access-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-play">
-                                        <polygon points="5 3 19 12 5 21 5 3" /> </svg>
-                                </div> <span className="access-text">Videos</span> </div>
-                            {/* Docs */}       <div className="access-link-wrapper" onClick={() => this.filter("Docs")}>
-                                <div className="access-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-align-left">
-                                        <line x1="17" y1="10" x2="3" y2="10" />
-                                        <line x1="21" y1="6" x2="3" y2="6" />
-                                        <line x1="21" y1="14" x2="3" y2="14" />
-                                        <line x1="17" y1="18" x2="3" y2="18" /> </svg>
-                                </div> <span className="access-text">Docs</span> </div>
-                            {/* Apps */}       <div className="access-link-wrapper" onClick={() => this.filter("Apps")}>
-                                <div className="access-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-layers">
-                                        <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                                        <polyline points="2 17 12 22 22 17" />
-                                        <polyline points="2 12 12 17 22 12" /> </svg>
-                                </div> <span className="access-text">Apps</span> </div>
-                            {/* Compressed */}   <div className="access-link-wrapper" onClick={() => this.filter("Compressed")}>
-                                <div className="access-icon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-package"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-                                </div> <span className="access-text">Compressed</span> </div>
+                <div className="draftjs">
+                    <textarea placeholder={"Write your text here \n···"} autoFocus="true" spellCheck="true" wrap="soft"></textarea>
+                </div>
+                <div className="section-header-wrapper mt-3">
+                    <h1 className="section-header">Select device</h1>
+                    {this.state.deviceList.length > 6 && <a className="section-header-link">
+                        View All
+                    </a>}
+                </div>
+                {this.state.selectedFiles.length >= 0 && <div className="device-display-container">
+                    {
+                        !this.state.deviceLoading && this.state.deviceList.map((data, i) =>
+                            <div key={i} className="device-view" style={{ background: data.platform == 1 ? "#defae7" : (data.platform == 0 || data.name.endsWith("on Mac")) ? "#ddd" : data.name.endsWith("on Linux") ? "#f7ecdc" : "#dae6f5" }}
+                                onClick={() => this.setState({ deviceSected: this.state.deviceList[i] })}>
+                                {/* {renderFileIcon(data.name, 50)} */}
+                                <i style={{ color: "#555" }} class={`las la-${data.platform != 2 ? "mobile" : "laptop"} la-3x`} />
+                                <p id="device-name" className="font-weight-light mt-2 mb-0"
+                                    style={{ maxWidth: "90%", lineHeight: "18px" }}>{data.name}</p>
+                            </div>
+                        )
+                    }
+                </div>}
+                <div className="d-flex justify-content-center">
+                    {this.state.selectedFiles.length >= 0 && <button className="btnx mt-4 mx-auto d-block" style={{ alignSelf: 'center' }} onClick={() => { this.uploadFiles() }}>
+                        <span className="circle">
+                            <span className="icon arrow"></span>
+                        </span>
+                        <div className="button-text h-100" id="send-text">
+                            <p className="d-block my-auto" align="center">Send Text</p>
                         </div>
-                    </section>
-                    <section className="content-section">
-                        <div className="section-header-wrapper">
-                            <h1 className="section-header">Preview</h1>
-                            <a className="section-header-link">View in folders</a>
+                    </button>}
+                </div>
+            </section>
+
+        )
+    }
+
+    renderHome = () => {
+        return (
+            <div style={{ visibility: (this.state.drag > 0) ? "hidden" : "visible" }}>
+                <section className="content-section">
+                    <h1 className="section-header">Quick Access</h1>
+                    <div className="access-links">
+                        {/* Images */}     <div className="access-link-wrapper" onClick={() => this.filter("Images")}>
+                            <div className="access-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-image">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                    <polyline points="21 15 16 10 5 21" /> </svg>
+                            </div> <span className="access-text">Images</span> </div>
+                        {/* Music */}      <div className="access-link-wrapper" onClick={() => this.filter("Music")}>
+                            <div className="access-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-music">
+                                    <path d="M9 18V5l12-2v13" />
+                                    <circle cx="6" cy="18" r="3" />
+                                    <circle cx="18" cy="16" r="3" /> </svg>
+                            </div> <span className="access-text">Music</span> </div>
+                        {/* Videos */}      <div className="access-link-wrapper" onClick={() => this.filter("Videos")}>
+                            <div className="access-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-play">
+                                    <polygon points="5 3 19 12 5 21 5 3" /> </svg>
+                            </div> <span className="access-text">Videos</span> </div>
+                        {/* Docs */}       <div className="access-link-wrapper" onClick={() => this.filter("Docs")}>
+                            <div className="access-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-align-left">
+                                    <line x1="17" y1="10" x2="3" y2="10" />
+                                    <line x1="21" y1="6" x2="3" y2="6" />
+                                    <line x1="21" y1="14" x2="3" y2="14" />
+                                    <line x1="17" y1="18" x2="3" y2="18" /> </svg>
+                            </div> <span className="access-text">Docs</span> </div>
+                        {/* Apps */}       <div className="access-link-wrapper" onClick={() => this.filter("Apps")}>
+                            <div className="access-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-layers">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                                    <polyline points="2 17 12 22 22 17" />
+                                    <polyline points="2 12 12 17 22 12" /> </svg>
+                            </div> <span className="access-text">Apps</span> </div>
+                        {/* Compressed */}   <div className="access-link-wrapper" onClick={() => this.filter("Compressed")}>
+                            <div className="access-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="feather feather-package"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            </div> <span className="access-text">Compressed</span> </div>
+                    </div>
+                </section>
+                <section className="content-section">
+                    <div className="section-header-wrapper">
+                        <h1 className="section-header">Preview</h1>
+                        <a className="section-header-link">View in folders</a>
+                    </div>
+                    <div className="content-section-line">
+                        <div className="section-part left">
+                            <a className="image-wrapper">
+                                <div className="image-overlay">
+                                    <div className="video-info">
+                                        <div className="video-info-text">
+                                            <p className="video-name medium">Happiness & Tears</p>
+                                            <p className="video-subtext medium">45.5 MB</p>
+                                        </div>
+                                        <button className="btn-play"></button>
+                                    </div>
+                                </div>
+                                <img src="https://images.unsplash.com/photo-1515552726023-7125c8d07fb3?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" />
+                                <span className="video-time">02:35</span>
+                            </a>
                         </div>
-                        <div className="content-section-line">
-                            <div className="section-part left">
+                        <div className="section-part right">
+                            <div className="content-part-line">
                                 <a className="image-wrapper">
                                     <div className="image-overlay">
                                         <div className="video-info">
                                             <div className="video-info-text">
-                                                <p className="video-name medium">Happiness & Tears</p>
-                                                <p className="video-subtext medium">45.5 MB</p>
+                                                <p className="video-name tiny">High Hopes</p>
+                                                <p className="video-subtext tiny">50 MB</p>
                                             </div>
-                                            <button className="btn-play"></button>
                                         </div>
                                     </div>
-                                    <img src="https://images.unsplash.com/photo-1515552726023-7125c8d07fb3?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" />
-                                    <span className="video-time">02:35</span>
+                                    <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2251&q=80" />
+                                    <span className="video-time">10:32</span>
+                                </a>
+                                <a className="image-wrapper">
+                                    <div className="image-overlay">
+                                        <div className="video-info">
+                                            <div className="video-info-text">
+                                                <p className="video-name tiny">Imaginery you</p>
+                                                <p className="video-subtext tiny">210.2 MB</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <img src="https://images.unsplash.com/photo-1542359649-31e03cd4d909?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" />
+                                    <span className="video-time">04:15</span>
                                 </a>
                             </div>
-                            <div className="section-part right">
-                                <div className="content-part-line">
-                                    <a className="image-wrapper">
-                                        <div className="image-overlay">
-                                            <div className="video-info">
-                                                <div className="video-info-text">
-                                                    <p className="video-name tiny">High Hopes</p>
-                                                    <p className="video-subtext tiny">50 MB</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2251&q=80" />
-                                        <span className="video-time">10:32</span>
-                                    </a>
-                                    <a className="image-wrapper">
-                                        <div className="image-overlay">
-                                            <div className="video-info">
-                                                <div className="video-info-text">
-                                                    <p className="video-name tiny">Imaginery you</p>
-                                                    <p className="video-subtext tiny">210.2 MB</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <img src="https://images.unsplash.com/photo-1542359649-31e03cd4d909?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" />
-                                        <span className="video-time">04:15</span>
-                                    </a>
-                                </div>
-                            </div>
                         </div>
-                    </section>
-                    <section className="content-section">
-                        <div className="section-header-wrapper">
-                            <h1 className="section-header">Recent Files</h1>
-                            <a className="section-header-link">
-                                View all files
-                        </a>
-                        </div>
-                        <div className="files-table">
-                            <div className="files-table-header">
-                                <div className="column-header table-cell">Name</div>
-                                <div className="column-header table-cell size-cell">Size</div>
-                                <div className="column-header table-cell">Last Modified</div>
-                                <div className="column-header table-cell">Action</div>
-                                <div className="column-header table-cell">Device</div>
-                            </div>
-                            <div className="files-table-row">
-                                <div className="table-cell name-cell pdf">Brandenburg.pdf</div>
-                                <div className="table-cell">42 MB</div>
-                                <div className="table-cell">Aug 26, 2020</div>
-                                <div className="table-cell action-cell">
-                                    <button className="more-action"></button>
-                                </div>
-                            </div>
-                            <div className="files-table-row">
-                                <div className="table-cell name-cell jpg">TheLionsRoar.jpg</div>
-                                <div className="table-cell size-cell">500 KB</div>
-                                <div className="table-cell">Aug 26, 2020</div>
-                                <div className="table-cell action-cell">
-                                    <button className="more-action"></button>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-                {(this.state.drag === 0 && this.state.typeSelected !== null) &&
-                    <div style={{ position: "absolute", top: 90 }}>
-                        <section className="content-section">
-                            <h1 className="section-header selectable" onClick={() => this.filter(null)}><i className="fas fa-chevron-left" />{" "} Quick Access: {this.state.typeSelected}</h1>
-                            <Quick typeSelected={this.state.typeSelected} fileList={this.state.fileList} />
-                        </section>
                     </div>
-                }
-            </div>)
+                </section>
+                <section className="content-section">
+                    <div className="section-header-wrapper">
+                        <h1 className="section-header">Recent Files</h1>
+                        <a className="section-header-link">
+                            View all files
+                        </a>
+                    </div>
+                    <div className="files-table">
+                        <div className="files-table-header">
+                            <div className="column-header table-cell">Name</div>
+                            <div className="column-header table-cell size-cell">Size</div>
+                            <div className="column-header table-cell">Last Modified</div>
+                            <div className="column-header table-cell">Action</div>
+                            <div className="column-header table-cell">Device</div>
+                        </div>
+                        <div className="files-table-row">
+                            <div className="table-cell name-cell pdf">Brandenburg.pdf</div>
+                            <div className="table-cell">42 MB</div>
+                            <div className="table-cell">Aug 26, 2020</div>
+                            <div className="table-cell action-cell">
+                                <button className="more-action"></button>
+                            </div>
+                        </div>
+                        <div className="files-table-row">
+                            <div className="table-cell name-cell jpg">TheLionsRoar.jpg</div>
+                            <div className="table-cell size-cell">500 KB</div>
+                            <div className="table-cell">Aug 26, 2020</div>
+                            <div className="table-cell action-cell">
+                                <button className="more-action"></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        )
     }
 
     renderRight = () => {
