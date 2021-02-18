@@ -4,7 +4,7 @@ import axios from 'axios';
 import './main.component.css';
 import $ from 'jquery';
 import moment from 'moment';
-import { getUser, removeUserSession, parseDate, renderFileIcon, fileType } from '../utils/common';
+import { getUser, removeUserSession, parseDate, renderFileIcon, fileType, getFileType } from '../utils/common';
 import ClipLoader from "react-spinners/ClipLoader";
 import firebase from '../firebase'
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
@@ -22,7 +22,7 @@ export default class Main extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            activeTab: 3,
+            activeTab: 1,
             tabType: '',
             showLeft: false,
             showRight: false,
@@ -37,6 +37,7 @@ export default class Main extends Component {
             closeIcon: -1,
             uploadArray: [],
             countDone: 0,
+            recentTexts: null,
             deviceList: [],
             deviceLoading: true,
             deviceSected: '',
@@ -66,11 +67,11 @@ export default class Main extends Component {
                 this.groupFiles(response.data.files)
             })
             .catch(err => console.log(err));
+        this.getRecentTexts();
         var url = new URL(window.location.href);
         var tab = (url.searchParams.get("tab") || "").toLowerCase();
-        if (tab != null && ['images', 'music', 'videos', 'docs', 'apps', 'compressed'].includes(tab))
+        if (tab != null && ['images', 'music', 'videos', 'docs', 'apps', 'compressed', 'texts'].includes(tab))
             this.setState({ activeTab: 2, tabType: this.handleCase(tab) })
-        console.log(tab);
     }
 
     registerPushMessaging = async () => {
@@ -104,6 +105,17 @@ export default class Main extends Component {
                 this.setState({ deviceList: devList, deviceLoading: false, deviceSected: devList[0] });
             })
             .catch(err => console.log(err));
+    }
+
+    getRecentTexts = () => {
+        this.setState({ recentTexts: null });
+        axios.get(`https://web-synk.azurewebsites.net/text/recent/100/?username=${this.state.user.username}`)
+            .then(res => {
+                this.setState({ recentTexts: res.data?.texts ?? [] })
+            })
+            .catch(err => {
+                toast.dark("⚠️ Error occured while recieving texts!")
+            });
     }
 
     groupFiles = (arr) => {
@@ -148,7 +160,7 @@ export default class Main extends Component {
                 <div className="download-item-texts">
                     <p className="download-text-header">{item.originalName || item.name}</p>
                     <p className="download-text-info">{item.caption}<span>{moment(item.createdAt).format("h:mm A")}</span></p>
-                    <p className="download-text-info">To {item.recieverName}<span><i className="fab fa-android"></i></span></p>
+                    <p className="download-text-info">To {item.recieverName}<span><i className="lab la-android"></i></span></p>
                     <div className="progressy-bar">
                         <span className="progressy" style={{ width: `${this.state.uploadArray[idx].done}%` }}></span>
                     </div>
@@ -169,7 +181,7 @@ export default class Main extends Component {
                 <div className="download-item-texts">
                     <p className="download-text-header">{item.originalName || item.name}</p>
                     <p className="download-text-info">{item.caption}<span>{moment(item.createdAt).format("h:mm A")}</span></p>
-                    <p className="download-text-info">To {item.recieverName}<span><i className="fab fa-android"></i></span></p>
+                    <p className="download-text-info">To {item.recieverName}<span><i className="lab la-android"></i></span></p>
                 </div>
                 <a href={"https://web-synk.azurewebsites.net/file/download/" + item.filename} download={item.originalName}>
                     <div className="download-icon">
@@ -262,6 +274,7 @@ export default class Main extends Component {
     }
 
     renderLeft = () => {
+        let isSendingfile = this.state.selectedFiles.length > 0;
         return (
             <div className={`left-area ${this.state.showLeft ? 'show' : ''}`}>
                 <button className="btn-close-left" onClick={(e) => { this.setState({ showLeft: false }) }}>
@@ -276,20 +289,21 @@ export default class Main extends Component {
                     onHide={() => this.setState({ settingsModal: false })}
                 />
                 <div className="app-name">Synk</div>
-                <a className={`item-link ${this.state.activeTab === 1 && this.state.selectedFiles.length == 0 ? 'active' : ''}`} id="pageLink" data-tip="Home" onClick={(e) => { this.setState({ activeTab: 1 }) }}>
-                    <svg
+                <a className={`item-link ${this.state.activeTab <= 2 && !isSendingfile ? 'active' : ''}`} id="pageLink" data-tip="Home" onClick={(e) => { this.setState({ activeTab: 1 }) }}>
+                    {this.state.tabType == '' ? <svg
                         xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" className="feather feather-grid" viewBox="0 0 24 24">
                         <defs />
                         <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
-                    </svg>
+                    </svg> : <i className="lar la-folder la-2x"></i>
+                    }
                 </a>
-                <a className={`item-link ${this.state.activeTab === 2 ? 'active' : ''}`} id="pageLink" data-tip="Vault" onClick={(e) => { this.setState({ activeTab: 2 }) }}>
+                {/* <a className={`item-link ${this.state.activeTab === 2 && !isSendingfile ? 'active' : ''}`} id="pageLink" data-tip="Vault" onClick={(e) => { this.setState({ activeTab: 2 }) }}>
                     <i className="lar la-folder la-2x"></i>
-                </a>
-                <a className={`item-link ${this.state.selectedFiles.length > 0 ? 'active' : ''}`} data-tip="Add file(s)" id="pageLink" onClick={(e) => { this.inputRef.current.click() }}>
+                </a> */}
+                <a className={`item-link ${isSendingfile ? 'active' : ''}`} data-tip="Add file(s)" id="pageLink" onClick={(e) => { this.inputRef.current.click() }}>
                     <i className="las la-plus la-2x" />
                 </a>
-                <a className={`item-link ${this.state.activeTab === 3 ? 'active' : ''}`} data-tip="Send Text" id="pageLink" onClick={(e) => { this.setState({ activeTab: 3 }) }}>
+                <a className={`item-link ${this.state.activeTab === 3 && !isSendingfile ? 'active' : ''}`} data-tip="Send Text" id="pageLink" onClick={(e) => { this.setState({ activeTab: 3 }) }}>
                     <i className="las la-quote-right la-2x"></i>
                 </a>
                 <a className="item-link" data-tip="Settings" onClick={() => this.setState({ settingsModal: true })} id="pageLink">
@@ -339,7 +353,7 @@ export default class Main extends Component {
                 {(this.state.drag === 0 && this.state.activeTab == 2 && this.state.tabType != "") &&
                     <div style={{ position: "absolute", top: 90 }}>
                         <section className="content-section">
-                            <h1 className="section-header selectable" onClick={() => { this.props.history.push('/'); this.setState({ activeTab: 1, tabType: '' }) }}><i className="fas fa-chevron-left" />{" "} Quick Access: {this.state.tabType}</h1>
+                            <h1 className="section-header selectable" onClick={() => { this.props.history.push('/'); this.setState({ activeTab: 1, tabType: '' }) }}><i className="las la-chevron-left" />{" "} Quick Access: {this.state.tabType}</h1>
                             <Quick typeSelected={this.state.tabType} fileList={this.state.fileList} />
                         </section>
                     </div>
@@ -388,18 +402,18 @@ export default class Main extends Component {
                         let text = this.sendTexRef.value;
 
                         axios.post('https://web-synk.azurewebsites.net/text/', {
-                            username : this.state.user.username,
-                            recieverName : this.state.deviceSected.name,
-                            senderName : "Website",
-                            text : text,
-                            token : this.state.deviceSected.token,
-                            title : 'Recievd a message from Synk Web',
-                            body : text,
-                            content : JSON.stringify({ caption: text }),
+                            username: this.state.user.username,
+                            recieverName: this.state.deviceSected.name,
+                            senderName: "Website",
+                            text: text,
+                            token: this.state.deviceSected.token,
+                            title: 'Recievd a message from Synk Web',
+                            body: text,
+                            content: JSON.stringify({ caption: text }),
                         })
                             .then(() => toast.dark('🙌 Message sent!'))
                             .catch((err) => {
-                                toast.dark('❗ Message could not be sent! :'+err)
+                                toast.dark('❗ Message could not be sent! :' + err)
                             })
 
                     }}>
@@ -417,9 +431,15 @@ export default class Main extends Component {
     }
 
     renderHome = () => {
+        const chk = (name, type) => {
+            if (type[0])
+                return type.includes(getFileType(fileType(name)))
+            return getFileType(fileType(name)) === type;
+        }
+        let files = this.state.fileList.filter((value) => getFileType(fileType(value.filename)) === 1).slice(0, 3) || [];
         return (
             <div style={{ visibility: (this.state.drag > 0) ? "hidden" : "visible" }}>
-                <section className="content-section">
+                <section className="content-section mt-0">
                     <h1 className="section-header">Quick Access</h1>
                     <div className="access-links">
                         {/* Images */}     <div className="access-link-wrapper" onClick={() => this.filter("Images")}>
@@ -462,89 +482,97 @@ export default class Main extends Component {
                             </div> <span className="access-text">Compressed</span> </div>
                     </div>
                 </section>
-                <section className="content-section">
+                {(files?.length ?? 0) > 0 && <section className="content-section mt-2">
                     <div className="section-header-wrapper">
                         <h1 className="section-header">Preview</h1>
                         <a className="section-header-link">View in folders</a>
                     </div>
                     <div className="content-section-line">
                         <div className="section-part left">
-                            <a className="image-wrapper">
+                            <a className="image-wrapper" src={"https://web-synk.azurewebsites.net/file/thumb/" + files[0].filename} target="_blank">
                                 <div className="image-overlay">
                                     <div className="video-info">
                                         <div className="video-info-text">
-                                            <p className="video-name medium">Happiness & Tears</p>
-                                            <p className="video-subtext medium">45.5 MB</p>
+                                            <p className="video-name medium">{files[0].originalName}</p>
+                                            <p className="video-subtext medium">{moment(files[0].createdAt).fromNow()}</p>
                                         </div>
                                         <button className="btn-play"></button>
                                     </div>
                                 </div>
-                                <img src="https://images.unsplash.com/photo-1515552726023-7125c8d07fb3?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" />
+                                <img src={"https://web-synk.azurewebsites.net/file/thumb/" + files[0].filename} />
                                 <span className="video-time">02:35</span>
                             </a>
                         </div>
                         <div className="section-part right">
                             <div className="content-part-line">
-                                <a className="image-wrapper">
+                                {files[1] != undefined && <a className="image-wrapper" src={"https://web-synk.azurewebsites.net/file/thumb/" + files[1].filename} target="_blank">
                                     <div className="image-overlay">
                                         <div className="video-info">
                                             <div className="video-info-text">
-                                                <p className="video-name tiny">High Hopes</p>
-                                                <p className="video-subtext tiny">50 MB</p>
+                                                <p className="video-name tiny">{files[1].originalName}</p>
+                                                <p className="video-subtext tiny">{moment(files[1].createdAt).fromNow()}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2251&q=80" />
+                                    <img src={"https://web-synk.azurewebsites.net/file/thumb/" + files[1].filename} />
                                     <span className="video-time">10:32</span>
-                                </a>
-                                <a className="image-wrapper">
+                                </a>}
+                                {files[2] != undefined && <a className="image-wrapper" src={"https://web-synk.azurewebsites.net/file/thumb/" + files[2].filename} target="_blank">
                                     <div className="image-overlay">
                                         <div className="video-info">
                                             <div className="video-info-text">
-                                                <p className="video-name tiny">Imaginery you</p>
-                                                <p className="video-subtext tiny">210.2 MB</p>
+                                                <p className="video-name tiny">{files[2].originalName}</p>
+                                                <p className="video-subtext tiny">{moment(files[2].createdAt).fromNow()}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <img src="https://images.unsplash.com/photo-1542359649-31e03cd4d909?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2167&q=80" />
+                                    <img src={"https://web-synk.azurewebsites.net/file/thumb/" + files[2].filename} />
                                     <span className="video-time">04:15</span>
-                                </a>
+                                </a>}
                             </div>
                         </div>
                     </div>
-                </section>
-                <section className="content-section">
+                </section>}
+                <section className="content-section mt-4">
                     <div className="section-header-wrapper">
-                        <h1 className="section-header">Recent Files</h1>
-                        <a className="section-header-link">
-                            View all files
+                        <h1 className="section-header">Recent Texts</h1>
+                        <a className="section-header-link" href="/?tab=texts">
+                            View all texts
                         </a>
                     </div>
-                    <div className="files-table">
-                        <div className="files-table-header">
-                            <div className="column-header table-cell">Name</div>
-                            <div className="column-header table-cell size-cell">Size</div>
-                            <div className="column-header table-cell">Last Modified</div>
-                            <div className="column-header table-cell">Action</div>
-                            <div className="column-header table-cell">Device</div>
-                        </div>
-                        <div className="files-table-row">
-                            <div className="table-cell name-cell pdf">Brandenburg.pdf</div>
-                            <div className="table-cell">42 MB</div>
-                            <div className="table-cell">Aug 26, 2020</div>
-                            <div className="table-cell action-cell">
-                                <button className="more-action"></button>
-                            </div>
-                        </div>
-                        <div className="files-table-row">
-                            <div className="table-cell name-cell jpg">TheLionsRoar.jpg</div>
-                            <div className="table-cell size-cell">500 KB</div>
-                            <div className="table-cell">Aug 26, 2020</div>
-                            <div className="table-cell action-cell">
-                                <button className="more-action"></button>
-                            </div>
-                        </div>
-                    </div>
+                    {this.state.recentTexts !== [] && <table className="table">
+                        <thead>
+                            <tr>
+                                <th colSpan={2}>Message</th>
+                                <th >Sent to</th>
+                                <th >Sent</th>
+                                <th className="action-cell">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {
+                                this.state.recentTexts == null
+                                    ? (
+                                        <tr>
+                                            <td colSpan={2} >Loading</td>
+                                            <td> -- </td>
+                                            <td> -- </td>
+                                            <td>
+                                                <button className="more-action"></button>
+                                            </td>
+                                        </tr>)
+                                    : this.state.recentTexts.filter(val => val.senderName == "Website").map((val, i) => (
+                                        <tr key={i}>
+                                            <td colSpan={2} >{val.text.length > 100 ? val.text.slice(0, 100) + " ..." : val.text}</td>
+                                            <td>{val.recieverName}</td>
+                                            <td>{moment(val.createdAt).fromNow()}</td>
+                                            <td>
+                                                <button className="more-action"></button>
+                                            </td>
+                                        </tr>
+                                    ))
+                            }</tbody>
+                    </table>}
                 </section>
             </div>
         )
@@ -656,14 +684,21 @@ export default class Main extends Component {
     }
 
 
-    handleFiles = (files) => {
+    handleFiles = async (files) => {
         let tempArray = this.state.selectedFiles
         for (let i = 0; i < files.length; i++) {
-            if (files[i].type.toLowerCase().includes("image"))
-                Resizer.imageFileResizer(files[i], 500, 500, 'JPEG', 100, 0,
-                    uri => { files[i].thumb = uri; tempArray.push(files[i]); console.log(tempArray) },
-                    'base64'
-                );
+            if (files[i].type.toLowerCase().includes("image")) {
+                await new Promise(resolve => {
+                    Resizer.imageFileResizer(files[i], 500, 500, 'JPEG', 100, 0,
+                        uri => {
+                            resolve(uri);
+                            files[i].thumb = uri;
+                            tempArray.push(files[i]);
+                        },
+                        'base64'
+                    );
+                });
+            }
             else
                 tempArray.push(files[i])
         }
@@ -712,6 +747,7 @@ export default class Main extends Component {
         }
         this.setState({ selectedFiles: [] })
         for (let i in tempArray) {
+            console.log("File:", tempArray[i])
             const formData = new FormData();
             formData.append('caption', "Caption");
             formData.append('username', this.state.user.username);
@@ -720,6 +756,9 @@ export default class Main extends Component {
             formData.append('file', tempArray[i]);
             formData.append('token', this.state.deviceSected.token);
             formData.append('thumb', tempArray[i]?.thumb ?? "")
+            formData.append('title', 'Recieved a file from Synk Web')
+            formData.append('body', `${tempArray[i].name.trim(0, 11)},  Size: ${this.fileSize(tempArray[i].size)}`)
+            formData.append('content', JSON.stringify({ senderName: 'Website', caption: 'Caption', username: this.state.user.username, recieverName: this.state.recieverName }))
             axios.post('https://web-synk.azurewebsites.net/file/', formData, {
                 onUploadProgress: (e) => {
                     const percent = Math.floor((e.loaded / e.total) * 100);
@@ -727,6 +766,13 @@ export default class Main extends Component {
                     this.updateArray(i, percent)
                 }
             })
+                .then((res) => {
+                    let tempArray = this.state.uploadArray
+                    tempArray[index].done = 100
+                    tempArray[index].filename = res.data.filename
+                    this.setState({ uploadArray: tempArray })
+
+                })
                 .catch((err) => {
                     this.updateArray(i, -10)
                 })

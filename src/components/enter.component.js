@@ -102,7 +102,6 @@ export default class Enter extends Component {
             .catch(err => {
                 this.setState({ loading: false })
                 toast.dark('🔑 Invalid credentials!');
-                console.log(err)
             })
     }
 
@@ -138,8 +137,8 @@ export default class Enter extends Component {
                                 <a data-tip={this.state.nameError}>
                                     {
                                         this.state.nameError
-                                            ? this.state.username ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
-                                            : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                            ? this.state.username ? <i className="las la-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                            : <i className="las la-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
                                     }
                                 </a>
                                 <input type="email" required placeholder="Email"
@@ -150,8 +149,8 @@ export default class Enter extends Component {
                                 <a data-tip={this.state.emailError}>
                                     {
                                         this.state.emailError
-                                            ? this.state.email ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
-                                            : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                            ? this.state.email ? <i className="las la-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                            : <i className="las la-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
                                     }
                                 </a>
                                 <input type="password" required placeholder="Password"
@@ -162,8 +161,8 @@ export default class Enter extends Component {
                                 <a data-tip={this.state.passError}>
                                     {
                                         this.state.passError
-                                            ? this.state.password ? <i className="fas fa-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
-                                            : <i className="fas fa-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
+                                            ? this.state.password ? <i className="las la-exclamation" style={{ color: "grey", position: "absolute", right: 15, marginTop: 10 }}></i> : ""
+                                            : <i className="las la-check" style={{ color: "green", position: "absolute", right: 15, marginTop: 10 }}></i>
                                     }
                                 </a>
                             </div>

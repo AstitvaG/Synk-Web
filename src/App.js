@@ -74,7 +74,7 @@ export default class App extends Component {
 				{ isMobile()
 					? <div>Download the app to continue</div>
 					: <div className="container-fluid">
-						<PublicRoute path="/enter" component={Enter} />
+						<PublicRoute path="/enter/" component={Enter} />
 						<PrivateRoute path="/" exact component={Main} />
 						<ToastContainer position="bottom-center" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
 					</div>
