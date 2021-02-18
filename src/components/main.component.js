@@ -109,8 +109,9 @@ export default class Main extends Component {
 
     getRecentTexts = () => {
         this.setState({ recentTexts: null });
-        axios.get(`https://web-synk.azurewebsites.net/text/recent/100/?username=${this.state.user.username}`)
+        axios.get(`http://localhost:7000/text/recent/100/?username=${this.state.user.username}`)
             .then(res => {
+                console.log(res.data?.texts ?? [])
                 this.setState({ recentTexts: res.data?.texts ?? [] })
             })
             .catch(err => {
@@ -197,28 +198,27 @@ export default class Main extends Component {
 
 
     renderDrop = () => {
+        if (this.state.drag <= 0 && this.state.selectedFiles.length <= 0)
+            return null
         return (
-            <div className="drop-container" style={{
-                display: this.state.drag > 0 || this.state.selectedFiles.length > 0 ? 'flex' : 'none',
+            <div className="drop-container content-section" style={{
+                display: 'flex',
+                justifyContent: 'flex-start'
             }}
             >
                 {this.state.drag > 0 && <div className="drop-message">Drop files here</div>}
-                <input
-                    // className="file-input"
-                    type="file"
-                    multiple
-                    ref={this.inputRef}
-                    style={{ display: "none" }}
-                    onChange={(event) => {
-                        this.handleFiles(event.target.files)
-                    }}
-                />
                 {this.state.selectedFiles.length > 0 && <p className="upload-message">Files Selected</p>}
-                {this.state.selectedFiles.length > 1 && <p className="drop-message" style={{ top: "115px" }}>{this.state.selectedFiles.length} files selected</p>}
-                <div className="file-display-container">
+                {this.state.selectedFiles.length > 0 && <p className="upload-message" style={{ fontSize: "20px", marginTop: "-10px" }}>{this.state.selectedFiles.length} file{this.state.selectedFiles.length === 1 ? "" : 's'} selected</p>}
+                {this.state.selectedFiles.length > 0 && <div style={{ flexDirection: 'row', marginBottom: "30px" }}>
+                    <button style={{ height: "40px", width: "100px", borderRadius: "10px", border: 'none', backgroundColor: '#ffdbcc', marginLeft: '10px', marginRight: '10px', color: '#755550' }} onClick={() => this.setState({ selectedFiles: [] })}>Remove All</button>
+                    <button style={{ height: "40px", width: "100px", borderRadius: "10px", border: 'none', backgroundColor: '#3275f7', marginLeft: '10px', marginRight: '10px', color: '#FFFFFF' }} onClick={() => this.inputRef.current.click()}>Add More</button>
+                </div>}
+                {/* <div className="file-display-container"> */}
+                <SimpleBar className="file-display-container">
+
                     {
                         this.state.selectedFiles.map((data, i) =>
-                            <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: "white" }}
+                            <div key={i} className="file-selected unselectable" style={{ cursor: "pointer", background: "white" }}
                                 onMouseEnter={() => this.setState({ closeIcon: i })}
                                 onMouseLeave={() => this.setState({ closeIcon: -1 })}
                                 onClick={() => this.removeFile(data.name)}>
@@ -239,36 +239,36 @@ export default class Main extends Component {
                             </div>
                         )
                     }
-                </div>
-                {this.state.selectedFiles.length > 0 && <p className="device-message">Select Device</p>}
-                {this.state.selectedFiles.length > 0 && <div className="device-display-container">
+                </SimpleBar>
+                {/* </div> */}
+                {this.state.selectedFiles.length >= 0 && <div className="section-header-wrapper mt-3">
+                    <h1 className="section-header">Select Device</h1>
+                    {this.state.deviceList.length > 6 && <a className="section-header-link">
+                        View All
+                    </a>}
+                </div>}
+                {this.state.selectedFiles.length >= 0 && <div className="device-display-container" style={{ justifyContent: 'center' }}>
                     {
                         !this.state.deviceLoading && this.state.deviceList.map((data, i) =>
-                            <div key={i} className="w-75 mb-2 py-2 px-3 mx-auto d-flex justify-content-between align-items-center rounded-pill unselectable" style={{ cursor: "pointer", background: this.state.deviceSected == data ? "#c1f7f7" : "white" }}
+                            <div key={i} className={`device-view ${this.state.deviceSected == data ? "" : "notsel"}`} style={{ background: this.state.deviceSected == data ? "#c1f7f7" : data.platform == 1 ? "#defae7" : (data.platform == 0 || data.name.endsWith("on Mac")) ? "#ddd" : data.name.endsWith("on Linux") ? "#f7ecdc" : "#dae6f5" }}
                                 onClick={() => this.setState({ deviceSected: this.state.deviceList[i] })}>
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        {renderFileIcon(data.name, 50)}
-                                        <div className="mb-3 mb-sm-0 ml-3">
-                                            <p className="font-weight-bold mb-0 text-truncate"
-                                                style={{ maxWidth: "240px" }}>{data.name}</p>
-                                            {this.state.deviceSected == data && <small className="text-secondary text-truncate">Selected</small>}
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* <p className="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</p> */}
+                                {/* {renderFileIcon(data.name, 50)} */}
+                                <i style={{ color: "#555" }} className={`las la-${data.platform != 2 ? "mobile" : "laptop"} la-3x`} />
+                                <p id="device-name" className="font-weight-light mt-2 mb-0"
+                                    style={{ maxWidth: "90%", lineHeight: "18px" }}>{data.name}</p>
                             </div>
                         )
                     }
                 </div>}
-                {this.state.selectedFiles.length > 0 && <button className="btnx mt-4 mx-auto d-block" onClick={() => { this.uploadFiles() }}>
-                    <span className="circle">
-                        <span className="icon arrow"></span>
-                    </span>
-                    <div className="button-text h-100">
-                        <p className="d-block my-auto" align="center">Upload Files</p>
-                    </div>
-                </button>}
+                {this.state.selectedFiles.length > 0 &&
+                    <button className="btnx mt-4 mx-auto d-block" onClick={() => { this.uploadFiles() }}>
+                        <span className="circle">
+                            <span className="icon arrow"></span>
+                        </span>
+                        <div className="button-text h-100">
+                            <p className="d-block my-auto" align="center">Upload Files</p>
+                        </div>
+                    </button>}
             </div>
         )
     }
@@ -375,7 +375,7 @@ export default class Main extends Component {
                     <textarea ref={r => this.sendTexRef = r} placeholder={"Write your text here \n···"} autoFocus={true} spellCheck={true} wrap="soft"></textarea>
                 </div>
                 <div className="section-header-wrapper mt-3">
-                    <h1 className="section-header">Select device</h1>
+                    <h1 className="section-header">Select Device</h1>
                     {this.state.deviceList.length > 6 && <a className="section-header-link">
                         View All
                     </a>}
@@ -431,11 +431,6 @@ export default class Main extends Component {
     }
 
     renderHome = () => {
-        const chk = (name, type) => {
-            if (type[0])
-                return type.includes(getFileType(fileType(name)))
-            return getFileType(fileType(name)) === type;
-        }
         let files = this.state.fileList.filter((value) => getFileType(fileType(value.filename)) === 1).slice(0, 3) || [];
         return (
             <div style={{ visibility: (this.state.drag > 0) ? "hidden" : "visible" }}>
@@ -533,14 +528,14 @@ export default class Main extends Component {
                         </div>
                     </div>
                 </section>}
-                <section className="content-section mt-4">
+                {(this.state.recentTexts !== null && this.state.recentTexts?.length !== 0) && <section className="content-section mt-4">
                     <div className="section-header-wrapper">
                         <h1 className="section-header">Recent Texts</h1>
                         <a className="section-header-link" href="/?tab=texts">
                             View all texts
                         </a>
                     </div>
-                    {this.state.recentTexts !== [] && <table className="table">
+                    <table className="table">
                         <thead>
                             <tr>
                                 <th colSpan={2}>Message</th>
@@ -550,30 +545,29 @@ export default class Main extends Component {
                             </tr>
                         </thead>
                         <tbody>
-                            {
-                                this.state.recentTexts == null
-                                    ? (
-                                        <tr>
-                                            <td colSpan={2} >Loading</td>
-                                            <td> -- </td>
-                                            <td> -- </td>
-                                            <td>
-                                                <button className="more-action"></button>
-                                            </td>
-                                        </tr>)
-                                    : this.state.recentTexts.filter(val => val.senderName == "Website").map((val, i) => (
-                                        <tr key={i}>
-                                            <td colSpan={2} >{val.text.length > 100 ? val.text.slice(0, 100) + " ..." : val.text}</td>
-                                            <td>{val.recieverName}</td>
-                                            <td>{moment(val.createdAt).fromNow()}</td>
-                                            <td>
-                                                <button className="more-action"></button>
-                                            </td>
-                                        </tr>
-                                    ))
+                            {this.state.recentTexts == null
+                                ? (
+                                    <tr>
+                                        <td colSpan={2} >Loading</td>
+                                        <td> -- </td>
+                                        <td> -- </td>
+                                        <td>
+                                            <button className="more-action"></button>
+                                        </td>
+                                    </tr>)
+                                : this.state.recentTexts.filter(val => val.senderName == "Website").map((val, i) => (
+                                    <tr key={i}>
+                                        <td colSpan={2} >{val.text.length > 100 ? val.text.slice(0, 100) + " ..." : val.text}</td>
+                                        <td>{val.recieverName}</td>
+                                        <td>{moment(val.createdAt).fromNow()}</td>
+                                        <td>
+                                            <button className="more-action"></button>
+                                        </td>
+                                    </tr>
+                                ))
                             }</tbody>
-                    </table>}
-                </section>
+                    </table>
+                </section>}
             </div>
         )
     }
@@ -600,32 +594,33 @@ export default class Main extends Component {
                         </div>
                     </SimpleBar>
                 </div> <br /></> : ""}
-                {this.state.sentGrouped.length > 0 || this.state.countDone > 0 ? <div>
-                    <div className="right-area-header-wrapper">
-                        <p className="right-area-header">Files Sent</p>
-                        <button className="more-action"></button>
-                    </div>
-                    <SimpleBar className="right-files">
-                        {this.state.countDone > 0 && <div>
-                            <div className="download-item-line">
-                                <div className="line-header">Uploaded Just Now</div>
-                                {
-                                    this.state.uploadArray.map((file, i) => (file.done === 100 && this.renderDownloadCard(file, 0, i)))
-                                }
-                            </div>
-                        </div>}
-                        {this.state.sentGrouped.map((partday, i) => (
-                            <div key={i}>
+                {this.state.sentGrouped.length > 0 || this.state.countDone > 0
+                    ? <div>
+                        <div className="right-area-header-wrapper">
+                            <p className="right-area-header">Files Sent</p>
+                            <button className="more-action"></button>
+                        </div>
+                        <SimpleBar className="right-files" style={{ maxHeight: this.state.recGrouped.length == 0 ? "728px" : "340px" }}>
+                            {this.state.countDone > 0 && <div>
                                 <div className="download-item-line">
-                                    <div className="line-header">{parseDate(partday[0].createdAt)}</div>
+                                    <div className="line-header">Uploaded Just Now</div>
                                     {
-                                        partday.map((file, j) => (this.renderDownloadCard(file, i, j)))
+                                        this.state.uploadArray.map((file, i) => (file.done === 100 && this.renderDownloadCard(file, 0, i)))
                                     }
                                 </div>
-                            </div>
-                        ))}
-                    </SimpleBar>
-                </div> : ""}
+                            </div>}
+                            {this.state.sentGrouped.map((partday, i) => (
+                                <div key={i}>
+                                    <div className="download-item-line">
+                                        <div className="line-header">{parseDate(partday[0].createdAt)}</div>
+                                        {
+                                            partday.map((file, j) => (this.renderDownloadCard(file, i, j)))
+                                        }
+                                    </div>
+                                </div>
+                            ))}
+                        </SimpleBar>
+                    </div> : ""}
                 <br />
 
 
@@ -634,7 +629,7 @@ export default class Main extends Component {
                         <p className="right-area-header">Files Recieved</p>
                         <button className="more-action"></button>
                     </div>
-                    <SimpleBar className="right-files">
+                    <SimpleBar className="right-files" style={{ maxHeight: this.state.sentGrouped.length == 0 ? "100%" : "728px" }}>
                         {this.state.recGrouped.map((partday, i) => (
                             <div key={i}>
                                 <div className="download-item-line">
@@ -786,6 +781,15 @@ export default class Main extends Component {
                     {this.renderLeft()}
                     {this.renderCenter()}
                     {this.renderRight()}
+                    <input
+                        type="file"
+                        multiple
+                        ref={this.inputRef}
+                        style={{ display: "none" }}
+                        onChange={(event) => {
+                            this.handleFiles(event.target.files)
+                        }}
+                    />
                 </div>
                 <ReactTooltip place="bottom" type="dark" effect="solid" />
             </div>
