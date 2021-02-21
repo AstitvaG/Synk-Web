@@ -4,8 +4,8 @@ import axios from 'axios';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import Enter from './components/enter.component'
-import Main from './components/main.component'
+import Enter from './components/enter'
+import Main from './components/main'
 import PrivateRoute from './utils/privateRoute';
 import PublicRoute from './utils/publicRoute';
 import { baseUrl, getToken, removeUserSession, setUserSession } from './utils/common';

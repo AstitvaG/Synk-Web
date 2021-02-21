@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
-import './enter.component.css';
+import './enter.css';
 import { baseUrl, setUserSession } from '../utils/common';
 import { toast } from 'react-toastify';
 import ReactTooltip from 'react-tooltip';

@@ -1,7 +1,7 @@
 /* eslint-disable */
 import React, { Component } from 'react';
 import axios from 'axios';
-import './main.component.css';
+import './main.css';
 import $ from 'jquery';
 import moment from 'moment';
 import { getUser, removeUserSession, parseDate, renderFileIcon, fileType, getFileType, baseUrl } from '../utils/common';
@@ -10,11 +10,12 @@ import firebase from '../firebase'
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { detect } from 'detect-browser';
 import SimpleBar from 'simplebar-react';
-import SettingsModal from './settings.component';
+import SettingsModal from './settings';
 import 'simplebar/dist/simplebar.min.css';
 import ReactTooltip from 'react-tooltip';
 import { toast } from 'react-toastify';
-import Quick, { FilePreview } from './quick.component';
+import Quick, { FilePreview } from './quick';
+import * as musicMetadata from 'music-metadata-browser';
 
 export default class Main extends Component {
 
