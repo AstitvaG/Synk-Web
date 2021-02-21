@@ -14,8 +14,7 @@ import SettingsModal from './settings.component';
 import 'simplebar/dist/simplebar.min.css';
 import ReactTooltip from 'react-tooltip';
 import { toast } from 'react-toastify';
-import Quick from './quick.component';
-import Resizer from 'react-image-file-resizer';
+import Quick, { FilePreview } from './quick.component';
 
 export default class Main extends Component {
 
@@ -109,7 +108,7 @@ export default class Main extends Component {
 
     getRecentTexts = () => {
         this.setState({ recentTexts: null });
-        axios.get(`http://localhost:7000/text/recent/100/?username=${this.state.user.username}`)
+        axios.get(`https://web-synk.azurewebsites.net/text/recent/100/?username=${this.state.user.username}`)
             .then(res => {
                 console.log(res.data?.texts ?? [])
                 this.setState({ recentTexts: res.data?.texts ?? [] })
@@ -352,7 +351,7 @@ export default class Main extends Component {
                 {this.state.activeTab === 1 && this.renderHome()}
                 {(this.state.drag === 0 && this.state.activeTab == 2 && this.state.tabType != "") &&
                     <div style={{ position: "absolute", top: 90 }}>
-                        <section className="content-section">
+                        <section className="content-section mt-0">
                             <h1 className="section-header selectable" onClick={() => { this.props.history.push('/'); this.setState({ activeTab: 1, tabType: '' }) }}><i className="las la-chevron-left" />{" "} Quick Access: {this.state.tabType}</h1>
                             <Quick typeSelected={this.state.tabType} fileList={this.state.fileList} />
                         </section>
@@ -431,7 +430,7 @@ export default class Main extends Component {
     }
 
     renderHome = () => {
-        let files = this.state.fileList.filter((value) => getFileType(fileType(value.filename)) === 1).slice(0, 3) || [];
+        let files = this.state.fileList.slice(0, 3) || [];
         return (
             <div style={{ visibility: (this.state.drag > 0) ? "hidden" : "visible" }}>
                 <section className="content-section mt-0">
@@ -477,53 +476,19 @@ export default class Main extends Component {
                             </div> <span className="access-text">Compressed</span> </div>
                     </div>
                 </section>
-                {(files?.length ?? 0) > 0 && <section className="content-section mt-2">
+                {(files?.length ?? 0) > 0 && <section className="content-section mt-0">
                     <div className="section-header-wrapper">
-                        <h1 className="section-header">Preview</h1>
+                        <h1 className="section-header">Recent Files</h1>
                         <a className="section-header-link">View in folders</a>
                     </div>
-                    <div className="content-section-line">
-                        <div className="section-part left">
-                            <a className="image-wrapper" src={"https://web-synk.azurewebsites.net/file/thumb/" + files[0].filename} target="_blank">
-                                <div className="image-overlay">
-                                    <div className="video-info">
-                                        <div className="video-info-text">
-                                            <p className="video-name medium">{files[0].originalName}</p>
-                                            <p className="video-subtext medium">{moment(files[0].createdAt).fromNow()}</p>
-                                        </div>
-                                        <button className="btn-play"></button>
-                                    </div>
-                                </div>
-                                <img src={"https://web-synk.azurewebsites.net/file/thumb/" + files[0].filename} />
-                                <span className="video-time">02:35</span>
-                            </a>
+                    <div className="content-section-line mv mt-0 mb-0">
+                        <div className="section-part">
+                            <FilePreview file={files[0]} big image={this.props.typeSelected === "Images"} />
                         </div>
-                        <div className="section-part right">
+                        <div className="section-part">
                             <div className="content-part-line">
-                                {files[1] != undefined && <a className="image-wrapper" src={"https://web-synk.azurewebsites.net/file/thumb/" + files[1].filename} target="_blank">
-                                    <div className="image-overlay">
-                                        <div className="video-info">
-                                            <div className="video-info-text">
-                                                <p className="video-name tiny">{files[1].originalName}</p>
-                                                <p className="video-subtext tiny">{moment(files[1].createdAt).fromNow()}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <img src={"https://web-synk.azurewebsites.net/file/thumb/" + files[1].filename} />
-                                    <span className="video-time">10:32</span>
-                                </a>}
-                                {files[2] != undefined && <a className="image-wrapper" src={"https://web-synk.azurewebsites.net/file/thumb/" + files[2].filename} target="_blank">
-                                    <div className="image-overlay">
-                                        <div className="video-info">
-                                            <div className="video-info-text">
-                                                <p className="video-name tiny">{files[2].originalName}</p>
-                                                <p className="video-subtext tiny">{moment(files[2].createdAt).fromNow()}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <img src={"https://web-synk.azurewebsites.net/file/thumb/" + files[2].filename} />
-                                    <span className="video-time">04:15</span>
-                                </a>}
+                                <FilePreview file={files[1]} image={this.props.typeSelected === "Images"} />
+                                <FilePreview file={files[2]} image={this.props.typeSelected === "Images"} />
                             </div>
                         </div>
                     </div>
@@ -682,20 +647,7 @@ export default class Main extends Component {
     handleFiles = async (files) => {
         let tempArray = this.state.selectedFiles
         for (let i = 0; i < files.length; i++) {
-            if (files[i].type.toLowerCase().includes("image")) {
-                await new Promise(resolve => {
-                    Resizer.imageFileResizer(files[i], 500, 500, 'JPEG', 100, 0,
-                        uri => {
-                            resolve(uri);
-                            files[i].thumb = uri;
-                            tempArray.push(files[i]);
-                        },
-                        'base64'
-                    );
-                });
-            }
-            else
-                tempArray.push(files[i])
+            tempArray.push(files[i])
         }
         this.setState({ selectedFiles: tempArray })
     }

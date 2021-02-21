@@ -6,6 +6,68 @@ import moment from 'moment';
 import axios from 'axios';
 import { Modal } from 'react-bootstrap';
 
+class FilePreview extends Component {
+
+    state = {
+        exists: false
+    }
+
+    componentDidMount = () => {
+        if (this.props.file === undefined) return;
+        axios.head("https://web-synk.azurewebsites.net/file/hasthumb/" + this.props.file.filename)
+            .then((res) => this.setState({ exists: res.status === 200 }))
+    }
+
+    renderWithoutThumb(file) {
+        let iconData = renderFileIcon(fileType(file.originalName).toLowerCase(), -1, true);
+        let big = this.props.big ? "big" : "";
+        return (
+            <a href={"https://web-synk.azurewebsites.net/file/render/" + file.filename} rel="noopener noreferrer" target="_blank" className={`image-wrapper ${big}`}>
+                <div className="image-overlay">
+                    <div className="video-info">
+                        <div className="video-info-text">
+                            <p className={`video-name ${big === "big" ? "medium" : "tiny"}`}>{file.originalName}</p>
+                            <p className={`video-subtext ${big === "big" ? "medium" : "tiny"}`}>{moment(file.createdAt).fromNow()}</p>
+                        </div>
+                    </div>
+                </div>
+                <div style={{ backgroundColor: iconData[0], width: "100%", height: "100%", justifyContent: "center", alignItems: "center", display: "flex" }}>
+                    <i className={`${iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>
+                </div>
+                <span className="video-time">{fileType(file.originalName).toUpperCase()}</span>
+            </a>
+        )
+    }
+
+    renderWithThumb = (file) => {
+        let big = this.props.big ? "big" : "";
+        return (
+            <a onClick={() => this.props.image ? this.props.cb : window.open("https://web-synk.azurewebsites.net/file/render/" + file.filename, "_blank")} className={`image-wrapper ${big}`}>
+                <div className="image-overlay">
+                    <div className="video-info">
+                        <div className="video-info-text">
+                            <p className={`video-name ${big === "big" ? "medium" : "tiny"}`}>{file.originalName}</p>
+                            <p className={`video-subtext ${big === "big" ? "medium" : "tiny"}`}>{moment(file.createdAt).fromNow()}</p>
+                        </div>
+                    </div>
+                </div>
+                <img src={"https://web-synk.azurewebsites.net/file/thumb/" + file.filename} />
+                <span className="video-time">{fileType(file.originalName).toUpperCase()}</span>
+            </a>
+        )
+    }
+
+    render() {
+        let { file } = this.props
+        if (file === undefined) return null;
+        if (this.state.exists)
+            return this.renderWithThumb(file);
+        else
+            return this.renderWithoutThumb(file);
+
+    }
+}
+
 
 class Quick extends Component {
 
@@ -47,78 +109,26 @@ class Quick extends Component {
         }
     };
 
-    renderTwo = (index) => {
-        var fi = this.state.files[index], se = this.state.files[index + 1];
-        return (
-            <div className="section-part">
-                <div className="content-part-line">
-                    {fi !== undefined && <a onClick={() => this.setState({ showPreview: index })} className="image-wrapper">
-                        <div className="image-overlay">
-                            <div className="video-info">
-                                <div className="video-info-text">
-                                    <p className="video-name tiny">{fi.originalName}</p>
-                                    <p className="video-subtext tiny">{moment(fi.createdAt).fromNow()}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <img src={"https://web-synk.azurewebsites.net/file/thumb/" + fi.filename} ref={ref => this[`imgFi-${index}`] = ref} onError={
-                            () => this[`imgFi-${index}`].src = "https://web-synk.azurewebsites.net/file/render/" + fi.filename} />
-                        <span className="video-time">{fileType(fi.originalName).toUpperCase()}</span>
-                    </a>}
-                    {se !== undefined && <a onClick={() => this.setState({ showPreview: index + 1 })} className="image-wrapper">
-                        <div className="image-overlay">
-                            <div className="video-info">
-                                <div className="video-info-text">
-                                    <p className="video-name tiny">{se.originalName}</p>
-                                    <p className="video-subtext tiny">{moment(se.createdAt).fromNow()}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <img src={"https://web-synk.azurewebsites.net/file/thumb/" + se.filename} ref={ref => this[`imgSe-${index}`] = ref} onError={
-                            () => this[`imgSe-${index}`].src = "https://web-synk.azurewebsites.net/file/render/" + se.filename} />
-                        <span className="video-time">{fileType(se.originalName).toUpperCase()}</span>
-                    </a>}
-                </div>
-            </div>
-        )
-    }
 
-    renderRow = (index) => {
-        return (
-            <div className="content-section-line mv">
-                {this.renderTwo(index)}
-                {this.renderTwo(index + 2)}
-            </div>
-        )
-    }
-
-    renderFirst = () => {
-        var temp = this.state.files[0]
+    renderFirst = (arr = [0, 1, 2]) => {
         return (
             <div className="content-section-line mv">
                 <div className="section-part">
-                    <a onClick={() => this.setState({ showPreview: 0 })} className="image-wrapper big">
-                        <div className="image-overlay">
-                            <div className="video-info">
-                                <div className="video-info-text">
-                                    <p className="video-name medium">{temp.originalName}</p>
-                                    <p className="video-subtext medium">{moment(temp.createdAt).fromNow()}</p>
-                                </div>
-                                <button className="btn-play"></button>
-                            </div>
-                        </div>
-                        <img src={"https://web-synk.azurewebsites.net/file/thumb/" + temp.filename} ref={ref => this[`imgTh-${0}`] = ref} onError={
-                            () => this[`imgTh-${0}`].src = "https://web-synk.azurewebsites.net/file/render/" + temp.filename} />
-                        <span className="video-time">{fileType(temp.originalName).toUpperCase()}</span>
-                    </a>
+                    <FilePreview file={this.state.files[arr[0]]} big image={this.props.typeSelected === "Images"} />
                 </div>
-                { this.renderTwo(1)}
-            </div >
+
+                <div className="section-part">
+                    <div className="content-part-line">
+                        <FilePreview file={this.state.files[arr[1]]} image={this.props.typeSelected === "Images"} />
+                        <FilePreview file={this.state.files[arr[2]]} image={this.props.typeSelected === "Images"} />
+                    </div>
+                </div>
+            </div>
         )
     }
 
     renderImagePreview = () => {
-        if ((this.state.files?.length ?? 0) === 0 || this.state.showPreview === -1) return null
+        if (this.state.showPreview === -1) return null
         let temp = this.state.files[this.state.showPreview];
         return (
             <Modal
@@ -128,11 +138,11 @@ class Quick extends Component {
                 aria-labelledby="contained-modal-title-vcenter"
                 centered
                 className="p-0">
-                <div class="modal-content">
-                    <div class="modal-body">
+                <div className="modal-content">
+                    <div className="modal-body">
                         <a onMouseEnter={() => this.setState({ isShown: true })}
                             onMouseLeave={() => this.setState({ isShown: false })}
-                            href={"https://web-synk.azurewebsites.net/file/render/" + temp.filename} target="_blank" style={{ width: "100%", maxHeight: "80vh" }}>
+                            href={"https://web-synk.azurewebsites.net/file/render/" + temp.filename} target="_blank" rel="noopener noreferrer" style={{ width: "100%", maxHeight: "80vh" }}>
                             {this.state.isShown && <div className="image-overlay prev">
                                 <div className="video-info">
                                     <div className="video-info-text">
@@ -142,103 +152,51 @@ class Quick extends Component {
                                     {/* <button className="btn-play"></button> */}
                                 </div>
                             </div>}
-                            <img src={"https://web-synk.azurewebsites.net/file/render/" + temp.filename} class="imagepreview" style={{ width: "100%", maxHeight: "80vh", objectFit: "contain" }}>
+                            <img src={"https://web-synk.azurewebsites.net/file/render/" + temp.filename} className="imagepreview" style={{ width: "100%", maxHeight: "80vh", objectFit: "contain" }}>
                             </img>
                         </a>
-                        <button type="button" onClick={() => this.setState({ showPreview: -1 })} class="close position-absolute btn-close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <button type="button" onClick={() => this.setState({ showPreview: -1 })} className="close position-absolute btn-close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span className="sr-only">Close</span></button>
                     </div>
                 </div>
             </Modal>
         )
     }
 
-    renderOthers = () => {
-        var len = this.state.files.length, arr = [];
-        for (let i = 3; i < len; i += 4) {
-            arr.push(i);
-        }
-        return (
-            arr.map((value, key) =>
-                <div key={key}>
-                    {this.renderRow(value)}
-                </div>
-            )
-        )
-    }
 
-    renderImageTab = () => {
+    render = () => {
         var { files } = this.state;
+        var image = this.props.typeSelected === "Images";
+        var len = this.state.files?.length ?? 0, arr = [];
+        if (len === 0) return null;
+        for (let i = image ? 3 : 0; i < len; i += 4)
+            arr.push(i);
+
         return (
             <>
-                {this.renderImagePreview()}
-                {files.length > 0 && this.renderFirst()}
-                {files.length > 3 && this.renderOthers()}
+                {image && this.renderImagePreview()}
+                {image && this.renderFirst()}
+                {arr.map((value, index) =>
+                    <div key={index} className="content-section-line mv">
+                        <div className="section-part">
+                            <div className="content-part-line">
+                                <FilePreview file={files[index]} image={image} cb={() => image && this.setState({ showPreview: index })} />
+                                <FilePreview file={files[index + 1]} image={image} cb={() => image && this.setState({ showPreview: index + 1 })} />
+                            </div>
+                        </div>
+                        <div className="section-part">
+                            <div className="content-part-line">
+                                <FilePreview file={files[index + 2]} image={image} cb={() => image && this.setState({ showPreview: index + 2 })} />
+                                <FilePreview file={files[index + 3]} image={image} cb={() => image && this.setState({ showPreview: index + 3 })} />
+                            </div>
+                        </div>
+                    </div>
+                )}
             </>
-        )
-    }
-
-    renderGeneric = (file, index) => {
-        if (file === undefined) return null;
-        let iconData = renderFileIcon(fileType(file.originalName).toLowerCase(), -1, true);
-        return (
-            <a href={"https://web-synk.azurewebsites.net/file/render/" + file.filename} target="_blank" className="image-wrapper">
-                <div className="image-overlay">
-                    <div className="video-info">
-                        <div className="video-info-text">
-                            <p className="video-name tiny">{file.originalName}</p>
-                            <p className="video-subtext tiny">{moment(file.createdAt).fromNow()}</p>
-                        </div>
-                    </div>
-                </div>
-                <div style={{ backgroundColor: iconData[0], width: "100%", height: "100%", justifyContent: "center", alignItems: "center", display: "flex" }}>
-                    <i className={`${iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>
-                </div>
-                <span className="video-time">{fileType(file.originalName).toUpperCase()}</span>
-            </a>
-        )
-
-    }
-
-    renderDocsTab = () => {
-        var { files } = this.state;
-        var len = this.state.files?.length ?? 0, arr = [];
-        for (let i = 0; i < len; i += 4) {
-            arr.push(i);
-        }
-        return (
-            arr.map((value, index) =>
-                <div key={index} className="content-section-line mv">
-                    <div className="section-part">
-                        <div className="content-part-line">
-                            {this.renderGeneric(files[index], index)}
-                            {this.renderGeneric(files[index + 1], index + 1)}
-                        </div>
-                    </div>
-                    <div className="section-part">
-                        <div className="content-part-line">
-                            {this.renderGeneric(files[index + 2], index + 2)}
-                            {this.renderGeneric(files[index + 4], index + 4)}
-                        </div>
-                    </div>
-                    {/* {this.renderRow(value)} */}
-                </div>
-            )
         )
         // return null;
     }
 
-
-    render() {
-        let type = this.props.typeSelected
-        return (
-            <>
-                {type === 'Images'
-                    ? this.renderImageTab()
-                    : this.renderDocsTab()
-                }
-            </>
-        );
-    }
 }
 
 export default Quick;
+export { FilePreview };
