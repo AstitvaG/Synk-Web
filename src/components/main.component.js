@@ -4,7 +4,7 @@ import axios from 'axios';
 import './main.component.css';
 import $ from 'jquery';
 import moment from 'moment';
-import { getUser, removeUserSession, parseDate, renderFileIcon, fileType, getFileType } from '../utils/common';
+import { getUser, removeUserSession, parseDate, renderFileIcon, fileType, getFileType, baseUrl } from '../utils/common';
 import ClipLoader from "react-spinners/ClipLoader";
 import firebase from '../firebase'
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
@@ -60,7 +60,7 @@ export default class Main extends Component {
                 $('div.main-area-header').removeClass('fixed');
             }
         });
-        axios.get('https://web-synk.azurewebsites.net/file/recent/25', { params: { username: this.state.user.username } })
+        axios.get(`${baseUrl}/file/recent/25`, { params: { username: this.state.user.username } })
             .then(response => {
                 this.setState({ fileList: response.data.files });
                 this.groupFiles(response.data.files)
@@ -81,7 +81,7 @@ export default class Main extends Component {
             return messaging.getToken()
         }).then(token => {
             this.setState({ myToken: token })
-            axios.post('https://web-synk.azurewebsites.net/device/add', {
+            axios.post(`${baseUrl}/device/add`, {
                 username: this.state.user.username,
                 token: token,
                 deviceName: this.handleCase(bd.name) + " on " + this.handleCase(bd.os),
@@ -98,7 +98,7 @@ export default class Main extends Component {
     }
 
     getDeviceList = () => {
-        axios.post('https://web-synk.azurewebsites.net/device/', { username: this.state.user.username })
+        axios.post(`${baseUrl}/device/`, { username: this.state.user.username })
             .then(res => {
                 let devList = res.data.devices.filter((data) => data.token !== this.state.myToken)
                 this.setState({ deviceList: devList, deviceLoading: false, deviceSected: devList[0] });
@@ -108,7 +108,7 @@ export default class Main extends Component {
 
     getRecentTexts = () => {
         this.setState({ recentTexts: null });
-        axios.get(`https://web-synk.azurewebsites.net/text/recent/100/?username=${this.state.user.username}`)
+        axios.get(`${baseUrl}/text/recent/100/?username=${this.state.user.username}`)
             .then(res => {
                 console.log(res.data?.texts ?? [])
                 this.setState({ recentTexts: res.data?.texts ?? [] })
@@ -174,7 +174,7 @@ export default class Main extends Component {
 
     renderDownloadCard = (item, i, j) => {
         return (
-            <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open("https://web-synk.azurewebsites.net/file/render/" + item.filename, "_blank")}>
+            <div className="download-area" key={"file-" + i + "-" + j} onDoubleClick={() => window.open(`${baseUrl}/file/render/${item.filename}`, "_blank")}>
                 <div className="download-item-icon">
                     {renderFileIcon(fileType(item.name || item.originalName))}
                 </div>
@@ -183,7 +183,7 @@ export default class Main extends Component {
                     <p className="download-text-info">{item.caption}<span>{moment(item.createdAt).format("h:mm A")}</span></p>
                     <p className="download-text-info">To {item.recieverName}<span><i className="lab la-android"></i></span></p>
                 </div>
-                <a href={"https://web-synk.azurewebsites.net/file/download/" + item.filename} download={item.originalName}>
+                <a href={`${baseUrl}/file/download/${item.filename}`} download={item.originalName}>
                     <div className="download-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 612 612">
                             <defs />
@@ -350,12 +350,10 @@ export default class Main extends Component {
                 </div>}
                 {this.state.activeTab === 1 && this.renderHome()}
                 {(this.state.drag === 0 && this.state.activeTab == 2 && this.state.tabType != "") &&
-                    <div style={{ position: "absolute", top: 90 }}>
-                        <section className="content-section mt-0">
-                            <h1 className="section-header selectable" onClick={() => { this.props.history.push('/'); this.setState({ activeTab: 1, tabType: '' }) }}><i className="las la-chevron-left" />{" "} Quick Access: {this.state.tabType}</h1>
-                            <Quick typeSelected={this.state.tabType} fileList={this.state.fileList} />
-                        </section>
-                    </div>
+                    <section className="content-section mt-0">
+                        <h1 className="section-header selectable" onClick={() => { this.props.history.push('/'); this.setState({ activeTab: 1, tabType: '' }) }}><i className="las la-chevron-left" />{" "} Quick Access: {this.state.tabType}</h1>
+                        <Quick typeSelected={this.state.tabType} fileList={this.state.fileList} />
+                    </section>
                 }
                 {this.state.activeTab === 3 && this.renderSendText()}
             </div>)
@@ -400,7 +398,7 @@ export default class Main extends Component {
                         }
                         let text = this.sendTexRef.value;
 
-                        axios.post('https://web-synk.azurewebsites.net/text/', {
+                        axios.post(`${baseUrl}/text/`, {
                             username: this.state.user.username,
                             recieverName: this.state.deviceSected.name,
                             senderName: "Website",
@@ -503,18 +501,18 @@ export default class Main extends Component {
                     <table className="table">
                         <thead>
                             <tr>
-                                <th colSpan={2}>Message</th>
-                                <th >Sent to</th>
+                                <th colSpan={4}>Message</th>
+                                <th colSpan={2} >Sent to</th>
                                 <th >Sent</th>
                                 <th className="action-cell">Action</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <SimpleBar className="tbody">
                             {this.state.recentTexts == null
                                 ? (
                                     <tr>
-                                        <td colSpan={2} >Loading</td>
-                                        <td> -- </td>
+                                        <td colSpan={4} >Loading</td>
+                                        <td colSpan={2}> -- </td>
                                         <td> -- </td>
                                         <td>
                                             <button className="more-action"></button>
@@ -522,15 +520,15 @@ export default class Main extends Component {
                                     </tr>)
                                 : this.state.recentTexts.filter(val => val.senderName == "Website").map((val, i) => (
                                     <tr key={i}>
-                                        <td colSpan={2} >{val.text.length > 100 ? val.text.slice(0, 100) + " ..." : val.text}</td>
-                                        <td>{val.recieverName}</td>
+                                        <td colSpan={4} >{val.text.length > 100 ? val.text.slice(0, 100) + " ..." : val.text}</td>
+                                        <td colSpan={2}>{val.recieverName}</td>
                                         <td>{moment(val.createdAt).fromNow()}</td>
                                         <td>
                                             <button className="more-action"></button>
                                         </td>
                                     </tr>
                                 ))
-                            }</tbody>
+                            }</SimpleBar>
                     </table>
                 </section>}
             </div>
@@ -565,7 +563,7 @@ export default class Main extends Component {
                             <p className="right-area-header">Files Sent</p>
                             <button className="more-action"></button>
                         </div>
-                        <SimpleBar className="right-files" style={{ maxHeight: this.state.recGrouped.length == 0 ? "728px" : "340px" }}>
+                        <SimpleBar className="right-files" style={{ maxHeight: this.state.recGrouped.length == 0 ? "785px" : "340px" }}>
                             {this.state.countDone > 0 && <div>
                                 <div className="download-item-line">
                                     <div className="line-header">Uploaded Just Now</div>
@@ -706,7 +704,7 @@ export default class Main extends Component {
             formData.append('title', 'Recieved a file from Synk Web')
             formData.append('body', `${tempArray[i].name.trim(0, 11)},  Size: ${this.fileSize(tempArray[i].size)}`)
             formData.append('content', JSON.stringify({ senderName: 'Website', caption: 'Caption', username: this.state.user.username, recieverName: this.state.recieverName }))
-            axios.post('https://web-synk.azurewebsites.net/file/', formData, {
+            axios.post(`${baseUrl}/file/`, formData, {
                 onUploadProgress: (e) => {
                     const percent = Math.floor((e.loaded / e.total) * 100);
                     console.log("Upload", i, percent)

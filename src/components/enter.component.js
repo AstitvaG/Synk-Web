@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import './enter.component.css';
-import { setUserSession } from '../utils/common';
+import { baseUrl, setUserSession } from '../utils/common';
 import { toast } from 'react-toastify';
 import ReactTooltip from 'react-tooltip';
 import ClipLoader from "react-spinners/ClipLoader";
@@ -29,7 +29,7 @@ export default class Enter extends Component {
         this.setState({
             nameError: truth ? null : 'Name must be longer than 3 characters'
         })
-        check && truth && axios.get('https://web-synk.azurewebsites.net/auth/check/name/' + username)
+        check && truth && axios.get(`${baseUrl}/auth/check/name/` + username)
             .catch(() => this.setState({
                 nameError: 'Username taken!'
             }))
@@ -43,7 +43,7 @@ export default class Enter extends Component {
         this.setState({
             emailError: truth ? null : 'Email must be of valid type'
         })
-        check && truth && axios.get('https://web-synk.azurewebsites.net/auth/check/email/' + email)
+        check && truth && axios.get(`${baseUrl}/auth/check/email/` + email)
             .catch(() => this.setState({
                 emailError: 'Email taken!'
             }))
@@ -72,7 +72,7 @@ export default class Enter extends Component {
             email: this.state.email,
             password: this.state.password,
         }
-        axios.post('https://web-synk.azurewebsites.net/auth/signup', newUser)
+        axios.post(`${baseUrl}/auth/signup`, newUser)
             .then(res => {
                 this.setState({ loading: false })
                 toast.dark('✌️ Signed up Successfully!');
@@ -92,7 +92,7 @@ export default class Enter extends Component {
             username: this.state.email,
             password: this.state.password
         }
-        axios.post('https://web-synk.azurewebsites.net/auth/login', loginDetails)
+        axios.post(`${baseUrl}/auth/login`, loginDetails)
             .then(res => {
                 this.setState({ loading: false })
                 toast.dark('✌️ Logged in Successfully!');

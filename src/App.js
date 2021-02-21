@@ -8,7 +8,7 @@ import Enter from './components/enter.component'
 import Main from './components/main.component'
 import PrivateRoute from './utils/privateRoute';
 import PublicRoute from './utils/publicRoute';
-import { getToken, removeUserSession, setUserSession } from './utils/common';
+import { baseUrl, getToken, removeUserSession, setUserSession } from './utils/common';
 
 
 function getOS() {
@@ -54,7 +54,7 @@ export default class App extends Component {
 			return;
 		}
 
-		axios.get(`https://web-synk.azurewebsites.net/auth/verifyToken?token=${token}`).then(response => {
+		axios.get(`${baseUrl}/auth/verifyToken?token=${token}`).then(response => {
 			setUserSession(response.data.token, response.data.user);
 			this.setState({ loading: false });
 		}).catch(error => {

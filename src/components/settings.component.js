@@ -1,12 +1,13 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-bootstrap';
+import { baseUrl } from '../utils/common';
 
 export default function SettingsModal(props) {
     let [devices, setDevices] = useState([]);
 
     useEffect(() => {
-        axios.post('https://web-synk.azurewebsites.net/device/', { username: props.user.username })
+        axios.post(`${baseUrl}/device/`, { username: props.user.username })
             .then(res => {
                 setDevices(res.data.devices);
             })

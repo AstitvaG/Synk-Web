@@ -1,10 +1,11 @@
 /* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { Component } from 'react';
-import { getFileType, fileType, getUser, renderFileIcon } from '../utils/common';
+import { getFileType, fileType, getUser, renderFileIcon, baseUrl } from '../utils/common';
 import moment from 'moment';
 import axios from 'axios';
 import { Modal } from 'react-bootstrap';
+import SimpleBar from 'simplebar-react';
 
 class FilePreview extends Component {
 
@@ -14,7 +15,7 @@ class FilePreview extends Component {
 
     componentDidMount = () => {
         if (this.props.file === undefined) return;
-        axios.head("https://web-synk.azurewebsites.net/file/hasthumb/" + this.props.file.filename)
+        axios.head(`${baseUrl}/file/hasthumb/${this.props.file.filename}`)
             .then((res) => this.setState({ exists: res.status === 200 }))
     }
 
@@ -22,7 +23,7 @@ class FilePreview extends Component {
         let iconData = renderFileIcon(fileType(file.originalName).toLowerCase(), -1, true);
         let big = this.props.big ? "big" : "";
         return (
-            <a href={"https://web-synk.azurewebsites.net/file/render/" + file.filename} rel="noopener noreferrer" target="_blank" className={`image-wrapper ${big}`}>
+            <a href={`${baseUrl}/file/render/${file.filename}`} rel="noopener noreferrer" target="_blank" className={`image-wrapper ${big}`}>
                 <div className="image-overlay">
                     <div className="video-info">
                         <div className="video-info-text">
@@ -42,7 +43,7 @@ class FilePreview extends Component {
     renderWithThumb = (file) => {
         let big = this.props.big ? "big" : "";
         return (
-            <a onClick={() => this.props.image ? this.props.cb : window.open("https://web-synk.azurewebsites.net/file/render/" + file.filename, "_blank")} className={`image-wrapper ${big}`}>
+            <a onClick={() => this.props.image ? this.props.cb : window.open(`${baseUrl}/file/render/${file.filename}`, "_blank")} className={`image-wrapper ${big}`}>
                 <div className="image-overlay">
                     <div className="video-info">
                         <div className="video-info-text">
@@ -51,7 +52,7 @@ class FilePreview extends Component {
                         </div>
                     </div>
                 </div>
-                <img src={"https://web-synk.azurewebsites.net/file/thumb/" + file.filename} />
+                <img src={`${baseUrl}/file/thumb/${file.filename}`} />
                 <span className="video-time">{fileType(file.originalName).toUpperCase()}</span>
             </a>
         )
@@ -87,7 +88,7 @@ class Quick extends Component {
     componentDidMount = async () => {
         var files = null, selected = this.props.typeSelected, all = this.props.fileList;
         if ((all?.size ?? 0) === 0) {
-            all = await axios.get('https://web-synk.azurewebsites.net/file/recent/25', { params: { username: this.state.user.username } })
+            all = await axios.get(`${baseUrl}/file/recent/25`, { params: { username: this.state.user.username } })
                 .catch(err => console.log(err));
             all = all?.data?.files ?? [];
         }
@@ -142,7 +143,7 @@ class Quick extends Component {
                     <div className="modal-body">
                         <a onMouseEnter={() => this.setState({ isShown: true })}
                             onMouseLeave={() => this.setState({ isShown: false })}
-                            href={"https://web-synk.azurewebsites.net/file/render/" + temp.filename} target="_blank" rel="noopener noreferrer" style={{ width: "100%", maxHeight: "80vh" }}>
+                            href={`${baseUrl}/file/render/${temp.filename}`} target="_blank" rel="noopener noreferrer" style={{ width: "100%", maxHeight: "80vh" }}>
                             {this.state.isShown && <div className="image-overlay prev">
                                 <div className="video-info">
                                     <div className="video-info-text">
@@ -152,7 +153,7 @@ class Quick extends Component {
                                     {/* <button className="btn-play"></button> */}
                                 </div>
                             </div>}
-                            <img src={"https://web-synk.azurewebsites.net/file/render/" + temp.filename} className="imagepreview" style={{ width: "100%", maxHeight: "80vh", objectFit: "contain" }}>
+                            <img src={`${baseUrl}/file/render/${temp.filename}`} className="imagepreview" style={{ width: "100%", maxHeight: "80vh", objectFit: "contain" }}>
                             </img>
                         </a>
                         <button type="button" onClick={() => this.setState({ showPreview: -1 })} className="close position-absolute btn-close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span className="sr-only">Close</span></button>
@@ -172,7 +173,7 @@ class Quick extends Component {
             arr.push(i);
 
         return (
-            <>
+            <SimpleBar style={{ height: "735px", display: 'flex' }}>
                 {image && this.renderImagePreview()}
                 {image && this.renderFirst()}
                 {arr.map((value, index) =>
@@ -191,7 +192,7 @@ class Quick extends Component {
                         </div>
                     </div>
                 )}
-            </>
+            </SimpleBar>
         )
         // return null;
     }

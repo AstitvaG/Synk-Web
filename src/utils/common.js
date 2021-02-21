@@ -121,3 +121,6 @@ export const fileType = (fileName) => {
     var val = fileName.substring(fileName.lastIndexOf('.') + 1, fileName.length);
     return val.length < 10 ? val : ""
 }
+
+// export const baseUrl = "https://web-synk.azurewebsites.net"
+export const baseUrl = "http://localhost:7000"
