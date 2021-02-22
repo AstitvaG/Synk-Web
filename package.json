@@ -16,6 +16,7 @@
     "local-storage": "^2.0.0",
     "moment": "^2.29.1",
     "react": "^17.0.1",
+    "react-audio-player": "^0.14.0",
     "react-bootstrap": "^1.4.0",
     "react-dom": "^17.0.1",
     "react-image-file-resizer": "^0.4.2",

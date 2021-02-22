@@ -5,11 +5,20 @@ import moment from 'moment';
 import axios from 'axios';
 import { Modal } from 'react-bootstrap';
 import SimpleBar from 'simplebar-react';
+import ReactAudioPlayer from 'react-audio-player';
+
+// class MusicPlayer extends Component {
+//     state = {
+//         playing: null
+//     }
+// }
 
 class FilePreview extends Component {
 
     state = {
         exists: false,
+        playing: null,
+        hover: false,
     }
 
     componentDidMount = () => {
@@ -19,16 +28,49 @@ class FilePreview extends Component {
     }
 
     shouldComponentUpdate(nxtProps, nxtState) {
-        if (this.state === nxtState)
+        if (this.state === nxtState && this.state.props === nxtProps) {
             return false
+        }
         else return true;
+    }
+
+    componentDidUpdate(prvProps, prvState) {
+        if (this.props.music && prvProps.cantPlay === false && this.player && this.props.cantPlay === true) {
+            this.player.audioEl.current.pause();
+            this.setState({ playing: false })
+        }
+    }
+
+    propsToCb = (file) => {
+        if (this.props.music) {
+            if (this.state.playing === null) {
+                this.setState({ playing: true })
+                if (this.props.cb) this.props.cb(true);
+                return;
+            }
+            if (!this.player) return
+            if (this.player.audioEl.current.paused) {
+                this.player.audioEl.current.play();
+                this.setState({ playing: true })
+                if (this.props.cb) this.props.cb(true);
+            }
+            else {
+                this.player.audioEl.current.pause();
+                this.setState({ playing: false })
+                if (this.props.cb) this.props.cb(false);
+            }
+        }
+        else if (this.props.cb) this.props.cb();
+        else window.open(`${baseUrl}/file/render/${file.filename}`, "_blank")
     }
 
     renderWithoutThumb(file) {
         let iconData = renderFileIcon(fileType(file.originalName).toLowerCase(), -1, true);
         let big = this.props.big ? "big" : "";
         return (
-            <a href={`${baseUrl}/file/render/${file.filename}`} rel="noopener noreferrer" target="_blank" className={`image-wrapper ${big}`}>
+            <a onClick={() => this.propsToCb(file)} className={`image-wrapper ${big}`}
+                onMouseEnter={() => this.setState({ hover: true })}
+                onMouseLeave={() => this.setState({ hover: false })}>
                 <div className="image-overlay">
                     <div className="video-info">
                         <div className="video-info-text">
@@ -38,17 +80,34 @@ class FilePreview extends Component {
                     </div>
                 </div>
                 <div style={{ backgroundColor: iconData[0], width: "100%", height: "100%", justifyContent: "center", alignItems: "center", display: "flex" }}>
-                    <i className={`${iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>
+                    {!this.state.hover && !this.state.playing && <i className={`${iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>}
                 </div>
+                {this.props.music && < div style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 2, justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
+                    {this.state.playing !== null && <ReactAudioPlayer
+                        src={`${baseUrl}/file/render/${file.filename}`}
+                        ref={(r) => this.player = r}
+                        autoPlay
+                    />}
+                    {(this.state.hover || this.state.playing) && <div className="access-icon">
+                        {this.state.playing === true
+                            ? <svg style={{ width: '50px', height: '50px' }} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-pause"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                            : <svg style={{ width: '50px', height: '50px' }} xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-play"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                        }
+                    </div>}
+                </div>}
                 <span className="video-time">{fileType(file.originalName).toUpperCase()}</span>
-            </a>
+            </a >
         )
     }
+
+
 
     renderWithThumb = (file) => {
         let big = this.props.big ? "big" : "";
         return (
-            <a onClick={() => this.props.image && this.props.cb ? this.props.cb() : window.open(`${baseUrl}/file/render/${file.filename}`, "_blank")} className={`image-wrapper ${big}`}>
+            <a onClick={() => this.propsToCb(file)} className={`image-wrapper ${big}`}
+                onMouseEnter={() => this.setState({ hover: true })}
+                onMouseLeave={() => this.setState({ hover: false })}>
                 <div className="image-overlay">
                     <div className="video-info">
                         <div className="video-info-text">
@@ -57,9 +116,24 @@ class FilePreview extends Component {
                         </div>
                     </div>
                 </div>
-                <img src={`${baseUrl}/file/thumb/${file.filename}`} alt={file.filename} />
+                <img src={`${baseUrl}/file/thumb/${file.filename}`} alt={file.originalName} onError={_ => this.setState({ exists: false })} />
+                {
+                    this.props.music && <div style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 2, justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
+                        {this.state.playing !== null && <ReactAudioPlayer
+                            src={`${baseUrl}/file/render/${file.filename}`}
+                            ref={(r) => this.player = r}
+                            autoPlay
+                        />}
+                        {(this.state.hover || this.state.playing) && <div className="access-icon">
+                            {this.state.playing === true
+                                ? <svg style={{ width: '50px', height: '50px' }} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-pause"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                                : <svg style={{ width: '50px', height: '50px' }} xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-play"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                            }
+                        </div>}
+                    </div>
+                }
                 <span className="video-time">{fileType(file.originalName).toUpperCase()}</span>
-            </a>
+            </a >
         )
     }
 
@@ -84,6 +158,7 @@ class Quick extends Component {
             user: getUser(),
             showPreview: -1,
             isShown: false,
+            isPlaying: -1,
         }
     }
 
@@ -140,7 +215,7 @@ class Quick extends Component {
                                     {/* <button className="btn-play"></button> */}
                                 </div>
                             </div>}
-                            <img src={`${baseUrl}/file/render/${temp.filename}`} alt={temp.filename} className="imagepreview" style={{ width: "100%", maxHeight: "80vh", objectFit: "contain" }}>
+                            <img src={`${baseUrl}/file/render/${temp.filename}`} alt={temp.originalName} className="imagepreview" style={{ width: "100%", maxHeight: "80vh", objectFit: "contain" }}>
                             </img>
                         </a>
                         <button type="button" onClick={() => this.setState({ showPreview: -1 })} className="close position-absolute btn-close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span className="sr-only">Close</span></button>
@@ -154,13 +229,14 @@ class Quick extends Component {
     render = () => {
         var { files } = this.state;
         var image = this.props.typeSelected === "Images";
+        var music = this.props.typeSelected === "Music";
         var len = this.state.files?.length ?? 0
         if (len === 0) return null;
         return (
             <SimpleBar style={{ height: "735px", display: 'flex' }} >
                 {this.renderImagePreview()}
                 <div className="section-part">
-                    {files.map((value, index) => <FilePreview key={index} big={index === 0} file={value} image={image} cb={() => image && this.setState({ showPreview: index })} />)}
+                    {files.map((value, index) => <FilePreview index={index} key={index} cantPlay={this.state.isPlaying !== index && this.state.isPlaying !== -1} big={index === 0} file={value} image={image} music={music} cb={image ? () => this.setState({ showPreview: index }) : music ? (b) => this.setState({ isPlaying: b ? index : -1 }) : null} />)}
                 </div>
             </SimpleBar>
         )
