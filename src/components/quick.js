@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { Component } from 'react';
 import { getFileType, fileType, getUser, renderFileIcon, baseUrl } from '../utils/common';
@@ -58,7 +57,7 @@ class FilePreview extends Component {
                         </div>
                     </div>
                 </div>
-                <img src={`${baseUrl}/file/thumb/${file.filename}`} />
+                <img src={`${baseUrl}/file/thumb/${file.filename}`} alt={file.filename} />
                 <span className="video-time">{fileType(file.originalName).toUpperCase()}</span>
             </a>
         )
@@ -71,7 +70,6 @@ class FilePreview extends Component {
             return this.renderWithThumb(file);
         else
             return this.renderWithoutThumb(file);
-
     }
 }
 
@@ -142,7 +140,7 @@ class Quick extends Component {
                                     {/* <button className="btn-play"></button> */}
                                 </div>
                             </div>}
-                            <img src={`${baseUrl}/file/render/${temp.filename}`} className="imagepreview" style={{ width: "100%", maxHeight: "80vh", objectFit: "contain" }}>
+                            <img src={`${baseUrl}/file/render/${temp.filename}`} alt={temp.filename} className="imagepreview" style={{ width: "100%", maxHeight: "80vh", objectFit: "contain" }}>
                             </img>
                         </a>
                         <button type="button" onClick={() => this.setState({ showPreview: -1 })} className="close position-absolute btn-close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span className="sr-only">Close</span></button>
@@ -166,7 +164,6 @@ class Quick extends Component {
                 </div>
             </SimpleBar>
         )
-        // return null;
     }
 
 }

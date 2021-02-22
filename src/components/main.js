@@ -666,8 +666,6 @@ export default class Main extends Component {
     updateArray = (index, value) => {
         let tempArray = this.state.uploadArray
         tempArray[index].done = value
-        if (value === 100)
-            this.setState({ countDone: this.state.countDone + 1 })
         this.setState({ uploadArray: tempArray })
     }
 
@@ -706,8 +704,7 @@ export default class Main extends Component {
                     let tempArray = this.state.uploadArray
                     tempArray[index].done = 100
                     tempArray[index].filename = res.data.filename
-                    this.setState({ uploadArray: tempArray })
-
+                    this.setState({ uploadArray: tempArray, countDone: this.state.countDone + 1 })
                 })
                 .catch((err) => {
                     this.updateArray(i, -10)
