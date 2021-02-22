@@ -15,7 +15,6 @@ import 'simplebar/dist/simplebar.min.css';
 import ReactTooltip from 'react-tooltip';
 import { toast } from 'react-toastify';
 import Quick, { FilePreview } from './quick';
-import * as musicMetadata from 'music-metadata-browser';
 
 export default class Main extends Component {
 
@@ -475,29 +474,20 @@ export default class Main extends Component {
                             </div> <span className="access-text">Compressed</span> </div>
                     </div>
                 </section>
-                {(files?.length ?? 0) > 0 && <section className="content-section mt-0">
+                {(files?.length ?? 0) > 0 && <section className="content-section mt-0 mb-0">
                     <div className="section-header-wrapper">
                         <h1 className="section-header">Recent Files</h1>
-                        <a className="section-header-link">View in folders</a>
                     </div>
-                    <div className="content-section-line mv mt-0 mb-0">
-                        <div className="section-part">
-                            <FilePreview file={files[0]} big image={this.props.typeSelected === "Images"} />
-                        </div>
-                        <div className="section-part">
-                            <div className="content-part-line">
-                                <FilePreview file={files[1]} image={this.props.typeSelected === "Images"} />
-                                <FilePreview file={files[2]} image={this.props.typeSelected === "Images"} />
-                            </div>
-                        </div>
+                    <div className="section-part">
+                        <FilePreview file={files[0]} big image={this.props.typeSelected === "Images"} />
+                        <FilePreview file={files[1]} image={this.props.typeSelected === "Images"} />
+                        <FilePreview file={files[2]} image={this.props.typeSelected === "Images"} />
                     </div>
                 </section>}
-                {(this.state.recentTexts !== null && this.state.recentTexts?.length !== 0) && <section className="content-section mt-4">
+                {(this.state.recentTexts !== null && this.state.recentTexts?.length !== 0) && <section className="content-section mt-2">
                     <div className="section-header-wrapper">
                         <h1 className="section-header">Recent Texts</h1>
-                        <a className="section-header-link" href="/?tab=texts">
-                            View all texts
-                        </a>
+                        <a className="section-header-link" href="/?tab=texts">View all texts</a>
                     </div>
                     <table className="table">
                         <thead>

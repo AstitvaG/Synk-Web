@@ -10,13 +10,19 @@ import SimpleBar from 'simplebar-react';
 class FilePreview extends Component {
 
     state = {
-        exists: false
+        exists: false,
     }
 
     componentDidMount = () => {
         if (this.props.file === undefined) return;
         axios.head(`${baseUrl}/file/hasthumb/${this.props.file.filename}`)
             .then((res) => this.setState({ exists: res.status === 200 }))
+    }
+
+    shouldComponentUpdate(nxtProps, nxtState) {
+        if (this.state === nxtState)
+            return false
+        else return true;
     }
 
     renderWithoutThumb(file) {
@@ -43,7 +49,7 @@ class FilePreview extends Component {
     renderWithThumb = (file) => {
         let big = this.props.big ? "big" : "";
         return (
-            <a onClick={() => this.props.image ? this.props.cb : window.open(`${baseUrl}/file/render/${file.filename}`, "_blank")} className={`image-wrapper ${big}`}>
+            <a onClick={() => this.props.image && this.props.cb ? this.props.cb() : window.open(`${baseUrl}/file/render/${file.filename}`, "_blank")} className={`image-wrapper ${big}`}>
                 <div className="image-overlay">
                     <div className="video-info">
                         <div className="video-info-text">
@@ -111,23 +117,6 @@ class Quick extends Component {
     };
 
 
-    renderFirst = (arr = [0, 1, 2]) => {
-        return (
-            <div className="content-section-line mv">
-                <div className="section-part">
-                    <FilePreview file={this.state.files[arr[0]]} big image={this.props.typeSelected === "Images"} />
-                </div>
-
-                <div className="section-part">
-                    <div className="content-part-line">
-                        <FilePreview file={this.state.files[arr[1]]} image={this.props.typeSelected === "Images"} />
-                        <FilePreview file={this.state.files[arr[2]]} image={this.props.typeSelected === "Images"} />
-                    </div>
-                </div>
-            </div>
-        )
-    }
-
     renderImagePreview = () => {
         if (this.state.showPreview === -1) return null
         let temp = this.state.files[this.state.showPreview];
@@ -167,31 +156,14 @@ class Quick extends Component {
     render = () => {
         var { files } = this.state;
         var image = this.props.typeSelected === "Images";
-        var len = this.state.files?.length ?? 0, arr = [];
+        var len = this.state.files?.length ?? 0
         if (len === 0) return null;
-        for (let i = image ? 3 : 0; i < len; i += 4)
-            arr.push(i);
-
         return (
-            <SimpleBar style={{ height: "735px", display: 'flex' }}>
-                {image && this.renderImagePreview()}
-                {image && this.renderFirst()}
-                {arr.map((value, index) =>
-                    <div key={index} className="content-section-line mv">
-                        <div className="section-part">
-                            <div className="content-part-line">
-                                <FilePreview file={files[index]} image={image} cb={() => image && this.setState({ showPreview: index })} />
-                                <FilePreview file={files[index + 1]} image={image} cb={() => image && this.setState({ showPreview: index + 1 })} />
-                            </div>
-                        </div>
-                        <div className="section-part">
-                            <div className="content-part-line">
-                                <FilePreview file={files[index + 2]} image={image} cb={() => image && this.setState({ showPreview: index + 2 })} />
-                                <FilePreview file={files[index + 3]} image={image} cb={() => image && this.setState({ showPreview: index + 3 })} />
-                            </div>
-                        </div>
-                    </div>
-                )}
+            <SimpleBar style={{ height: "735px", display: 'flex' }} >
+                {this.renderImagePreview()}
+                <div className="section-part">
+                    {files.map((value, index) => <FilePreview key={index} big={index === 0} file={value} image={image} cb={() => image && this.setState({ showPreview: index })} />)}
+                </div>
             </SimpleBar>
         )
         // return null;
