@@ -669,27 +669,37 @@ export default class Main extends Component {
         this.setState({ uploadArray: tempArray })
     }
 
+    getfiletype2 = (file) => {
+        const chk = (type) => {
+            if (type[0])
+                return type.includes(getFileType(fileType(file.name)))
+            return getFileType(fileType(file.name)) === type;
+        }
+        if (chk(1)) return "Images";
+        else if (chk(6)) return "Codes";
+        else if (chk(12)) return "Music";
+        else if (chk(7)) return "Videos";
+        else if (chk([2, 3, 4, 5])) return "Docs";
+        else if (chk([10, 13, 14])) return "Apps";
+        else return "Compressed";
+    }
+
 
     uploadFiles = async () => {
         let tempArray = this.state.selectedFiles
-        for (let i in tempArray) {
-            tempArray[i].done = 0
-            tempArray[i].caption = "Caption"
-            tempArray[i].recieverName = "Temp"
-            tempArray[i].createdAt = new Date()
-            await this.setState({ uploadArray: [...this.state.uploadArray, tempArray[i]] })
-        }
         this.setState({ selectedFiles: [] })
         for (let i in tempArray) {
-            console.log("File:", tempArray[i])
+            tempArray[i].done = 0
+            tempArray[i].recieverName = this.state.deviceSected.name
+            tempArray[i].createdAt = new Date()
+            await this.setState({ uploadArray: [...this.state.uploadArray, tempArray[i]] })
             const formData = new FormData();
-            formData.append('caption', "Caption");
             formData.append('username', this.state.user.username);
             formData.append('recieverName', this.state.deviceSected.name);
             formData.append('senderName', "Website");
             formData.append('file', tempArray[i]);
+            formData.append('filetype', this.getfiletype2(tempArray[i]));
             formData.append('token', this.state.deviceSected.token);
-            formData.append('thumb', tempArray[i]?.thumb ?? "")
             formData.append('title', 'Recieved a file from Synk Web')
             formData.append('body', `${tempArray[i].name.trim(0, 11)},  Size: ${this.fileSize(tempArray[i].size)}`)
             formData.append('content', JSON.stringify({ senderName: 'Website', caption: 'Caption', username: this.state.user.username, recieverName: this.state.recieverName }))

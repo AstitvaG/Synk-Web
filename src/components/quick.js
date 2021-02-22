@@ -80,7 +80,7 @@ class FilePreview extends Component {
                     </div>
                 </div>
                 <div style={{ backgroundColor: iconData[0], width: "100%", height: "100%", justifyContent: "center", alignItems: "center", display: "flex" }}>
-                    {!this.state.hover && !this.state.playing && <i className={`${iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>}
+                    {(!this.props.music || (!this.state.hover && !this.state.playing)) && <i className={`${iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>}
                 </div>
                 {this.props.music && < div style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 2, justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
                     {this.state.playing !== null && <ReactAudioPlayer
@@ -155,6 +155,7 @@ class Quick extends Component {
         super(props);
         this.state = {
             files: [],
+            page: 0,
             user: getUser(),
             showPreview: -1,
             isShown: false,
@@ -165,12 +166,9 @@ class Quick extends Component {
 
 
     componentDidMount = async () => {
-        var files = null, selected = this.props.typeSelected, all = this.props.fileList;
-        if ((all?.size ?? 0) === 0) {
-            all = await axios.get(`${baseUrl}/file/recent/25`, { params: { username: this.state.user.username } })
-                .catch(err => console.log(err));
-            all = all?.data?.files ?? [];
-        }
+        var files = null, selected = this.props.typeSelected, all = [];
+        console.log("Called");
+        all = await this.getMoreData(all);
 
         const chk = (name, type) => {
             if (type[0])
@@ -189,6 +187,12 @@ class Quick extends Component {
         }
     };
 
+    getMoreData = async (all) => {
+        all = await axios.get(`${baseUrl}/file/all/${this.props?.typeSelected ?? " "}`, { params: { username: this.state.user.username, page: this.state.page + 2 } })
+            .catch(err => console.log(err));
+        all = all?.data ?? [];
+        return all;
+    }
 
     renderImagePreview = () => {
         if (this.state.showPreview === -1) return null
