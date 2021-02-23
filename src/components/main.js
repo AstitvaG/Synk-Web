@@ -15,6 +15,7 @@ import 'simplebar/dist/simplebar.min.css';
 import ReactTooltip from 'react-tooltip';
 import { toast } from 'react-toastify';
 import Quick, { FilePreview } from './quick';
+import * as Thumb from '../utils/thumb'
 
 export default class Main extends Component {
 
@@ -42,6 +43,7 @@ export default class Main extends Component {
             deviceSected: '',
             myToken: '',
             settingsModal: false,
+            verificationStatus: null,
         }
         this.inputRef = React.createRef();
     }
@@ -50,7 +52,37 @@ export default class Main extends Component {
         return str[0].toUpperCase() + str.substring(1).toLowerCase();
     }
 
-    componentDidMount() {
+    startVerification = () => {
+        var numerrs = 0;
+        const interval = setInterval(async () => {
+            try {
+                let verificationStatus = (await axios.head(`${baseUrl}/auth/checkverification/`, { params: { username: this.state.user.username, email: this.state.user.email } })).status
+                if (verificationStatus == 200) {
+                    let user = this.state.user; user.verified = true;
+                    this.setState({ user, verificationStatus })
+                    toast.dark("🏆 Email verified successfully!")
+                    clearInterval(interval);
+                    return;
+                }
+                else this.setState({ verificationStatus });
+                if (verificationStatus == 202) throw "Failed"
+            }
+            catch {
+                numerrs++;
+                if (numerrs >= 5)
+                    clearInterval(interval);
+            }
+
+        }, 2000)
+    }
+
+    componentDidMount = async () => {
+        this.setState({
+            user: await getUser()
+        })
+        if (!this.state.user) return;
+        if (!this.state.user.verified)
+            this.startVerification()
         this.registerPushMessaging()
         $('.main-area').scroll(function () {
             if ($('.main-area').scrollTop() >= 88) {
@@ -110,7 +142,6 @@ export default class Main extends Component {
         this.setState({ recentTexts: null });
         axios.get(`${baseUrl}/text/recent/100/?username=${this.state.user.username}`)
             .then(res => {
-                console.log(res.data?.texts ?? [])
                 this.setState({ recentTexts: res.data?.texts ?? [] })
             })
             .catch(err => {
@@ -326,6 +357,19 @@ export default class Main extends Component {
                 onDragLeave={this.dragLeave}
                 onDrop={this.fileDrop}
             >
+                {!this.state.user.verified && this.state.verificationStatus !== 200 && <div className="mx-auto mt-3" style={{ backgroundColor: 'white', color: 'black', top: 0, width: "95%", height: "80px", display: 'flex', flexDirection: 'column', paddingTop: "12px", paddingLeft: '50px', borderRadius: "20px" }}>
+                    <p style={{ marginTop: 0, marginBottom: 3 }}>Your Email is not verified yet. You can <b>NOT</b> send or recieve before getting verified!</p>
+                    <div style={{ flexDirection: 'row', marginBottom: "30px", display: "flex" }}>
+                        <button style={{ height: "25px", width: "150px", borderRadius: "5px", border: 'none', backgroundColor: '#3275f7', marginRight: '10px', color: '#FFFFFF' }} onClick={() => this.inputRef.current.click()}>Verify Now</button>
+                        <button style={{ height: "25px", width: "150px", borderRadius: "5px", border: 'none', backgroundColor: '#dddddd', marginRight: '10px', color: '#555555' }} onClick={() => { this.setState({ verificationStatus: 203 }); axios.get(`${baseUrl}/auth/sendverify/?email=${this.state.user.email}&username=${this.state.user.username}`); this.startVerification(); }}>Send Again</button>
+                        {this.state.verificationStatus != null && (this.state.verificationStatus === 201
+                            ? <div style={{ color: 'green' }}>Verification Email Sent <i class="las la-check"></i></div>
+                            : this.state.verificationStatus === 202
+                                ? <div style={{ color: 'red' }}>Verification Expired, Send again <i class="las la-times"></i></div>
+                                : <div style={{ color: 'gray' }}>Sending to Your Email <i class="las la-arrow-right"></i></div>
+                        )}
+                    </div>
+                </div>}
                 {this.renderDrop()}
                 <button className="btn-show-right-area" onClick={(e) => { this.setState({ showRight: true }) }}>
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="feather feather-chevron-left">
@@ -429,6 +473,7 @@ export default class Main extends Component {
 
     renderHome = () => {
         let files = this.state.fileList.slice(0, 3) || [];
+        files = [...this.state.uploadArray.filter((val) => val.done === 100), ...files]
         return (
             <div style={{ visibility: (this.state.drag > 0) ? "hidden" : "visible" }}>
                 <section className="content-section mt-0">
@@ -495,7 +540,7 @@ export default class Main extends Component {
                                 <th colSpan={4}>Message</th>
                                 <th colSpan={2} >Sent to</th>
                                 <th >Sent</th>
-                                <th className="action-cell">Action</th>
+                                <th className="text-center">Action</th>
                             </tr>
                         </thead>
                         <SimpleBar className="tbody">
@@ -505,7 +550,7 @@ export default class Main extends Component {
                                         <td colSpan={4} >Loading</td>
                                         <td colSpan={2}> -- </td>
                                         <td> -- </td>
-                                        <td>
+                                        <td align="center">
                                             <button className="more-action"></button>
                                         </td>
                                     </tr>)
@@ -514,7 +559,7 @@ export default class Main extends Component {
                                         <td colSpan={4} >{val.text.length > 100 ? val.text.slice(0, 100) + " ..." : val.text}</td>
                                         <td colSpan={2}>{val.recieverName}</td>
                                         <td>{moment(val.createdAt).fromNow()}</td>
-                                        <td>
+                                        <td align="center">
                                             <button className="more-action"></button>
                                         </td>
                                     </tr>
@@ -543,7 +588,7 @@ export default class Main extends Component {
                     <SimpleBar className="right-files">
                         <div>
                             {
-                                this.state.uploadArray.map((file, i) => (file.done < 100 && this.renderUploadCard(file, i)))
+                                this.state.uploadArray.map((file, i) => (file.done > 0 && file.done < 100 && this.renderUploadCard(file, i)))
                             }
                         </div>
                     </SimpleBar>
@@ -665,7 +710,7 @@ export default class Main extends Component {
 
     updateArray = (index, value) => {
         let tempArray = this.state.uploadArray
-        tempArray[index].done = value
+        tempArray[index].done = Math.min(value, 99.9);
         this.setState({ uploadArray: tempArray })
     }
 
@@ -691,6 +736,7 @@ export default class Main extends Component {
         for (let i in tempArray) {
             tempArray[i].done = 0
             tempArray[i].recieverName = this.state.deviceSected.name
+            // tempArray[i].originalName = tempArray[i].name
             tempArray[i].createdAt = new Date()
             await this.setState({ uploadArray: [...this.state.uploadArray, tempArray[i]] })
             const formData = new FormData();
@@ -711,10 +757,11 @@ export default class Main extends Component {
                 }
             })
                 .then((res) => {
-                    let tempArray = this.state.uploadArray
-                    tempArray[index].done = 100
-                    tempArray[index].filename = res.data.filename
-                    this.setState({ uploadArray: tempArray, countDone: this.state.countDone + 1 })
+                    console.log(res.data)
+                    let { uploadArray } = this.state
+                    uploadArray[i].done = 100
+                    uploadArray[i] = Object.assign(uploadArray[i], res.data);
+                    this.setState({ uploadArray: uploadArray, countDone: this.state.countDone + 1 })
                 })
                 .catch((err) => {
                     this.updateArray(i, -10)
@@ -723,6 +770,7 @@ export default class Main extends Component {
     }
 
     render() {
+        // if(!this.props.user) return null;
         return (
             <div>
                 <div className="app-container unselectable">

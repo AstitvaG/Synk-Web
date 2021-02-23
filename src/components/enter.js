@@ -154,7 +154,7 @@ export default class Enter extends Component {
                                     }
                                 </a>
                                 <input type="password" required placeholder="Password"
-                                    className="input"
+                                    className="input lastchild"
                                     value={this.state.password}
                                     onChange={this.onChangePassword}
                                     onBlur={this.validatePass} />

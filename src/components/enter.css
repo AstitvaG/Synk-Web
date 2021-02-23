@@ -114,8 +114,11 @@
 	font-size: 15px;
 }
 
-.form-structor .signup .form-holder .input:last-child {
+.form-structor .signup .form-holder .input:last-child,
+.form-structor .signup .form-holder .input.lastchild {
 	border-bottom: 0;
+	-webkit-text-security: disc;
+	text-security: disc;
 }
 
 .form-structor .signup .form-holder .input::-webkit-input-placeholder {

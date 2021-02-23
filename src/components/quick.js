@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Modal } from 'react-bootstrap';
 import SimpleBar from 'simplebar-react';
 import ReactAudioPlayer from 'react-audio-player';
+import empty from '../images/empty.png';
 
 // class MusicPlayer extends Component {
 //     state = {
@@ -27,14 +28,12 @@ class FilePreview extends Component {
             .then((res) => this.setState({ exists: res.status === 200 }))
     }
 
-    shouldComponentUpdate(nxtProps, nxtState) {
-        if (this.state === nxtState && this.state.props === nxtProps) {
-            return false
-        }
-        else return true;
-    }
-
     componentDidUpdate(prvProps, prvState) {
+        if (this.props.file.done === 100 && prvProps.file.filename !== this.props.file.filename)
+            setTimeout(() => {
+                axios.head(`${baseUrl}/file/hasthumb/${this.props.file.filename}`)
+                    .then((res) => this.setState({ exists: res.status === 200 }))
+            }, 2000);
         if (this.props.music && prvProps.cantPlay === false && this.player && this.props.cantPlay === true) {
             this.player.audioEl.current.pause();
             this.setState({ playing: false })
@@ -74,7 +73,7 @@ class FilePreview extends Component {
                 <div className="image-overlay">
                     <div className="video-info">
                         <div className="video-info-text">
-                            <p className={`video-name ${big === "big" ? "medium" : "tiny"}`}>{file.originalName}</p>
+                            <p className={`video-name ${big === "big" ? "medium" : "tiny"}`}>{file.originalName.split('.').slice(0, -1).join('.')}</p>
                             <p className={`video-subtext ${big === "big" ? "medium" : "tiny"}`}>{moment(file.createdAt).fromNow()}</p>
                         </div>
                     </div>
@@ -83,7 +82,7 @@ class FilePreview extends Component {
                     {(!this.props.music || (!this.state.hover && !this.state.playing)) && <i className={`${iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>}
                 </div>
                 {this.props.music && < div style={{ position: 'absolute', width: '100%', height: '100%', zIndex: 2, justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
-                    {this.state.playing !== null && <ReactAudioPlayer
+                    {this.state.playing !== null && <ReactAudioPlayer onEnded={() => this.setState({ playing: false })}
                         src={`${baseUrl}/file/render/${file.filename}`}
                         ref={(r) => this.player = r}
                         autoPlay
@@ -111,7 +110,7 @@ class FilePreview extends Component {
                 <div className="image-overlay">
                     <div className="video-info">
                         <div className="video-info-text">
-                            <p className={`video-name ${big === "big" ? "medium" : "tiny"}`}>{file.originalName}</p>
+                            <p className={`video-name ${big === "big" ? "medium" : "tiny"}`}>{file.originalName.split('.').slice(0, -1).join('.')}</p>
                             <p className={`video-subtext ${big === "big" ? "medium" : "tiny"}`}>{moment(file.createdAt).fromNow()}</p>
                         </div>
                     </div>
@@ -154,7 +153,7 @@ class Quick extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            files: [],
+            files: null,
             page: 0,
             user: getUser(),
             showPreview: -1,
@@ -167,7 +166,6 @@ class Quick extends Component {
 
     componentDidMount = async () => {
         var files = null, selected = this.props.typeSelected, all = [];
-        console.log("Called");
         all = await this.getMoreData(all);
 
         const chk = (name, type) => {
@@ -191,7 +189,7 @@ class Quick extends Component {
         all = await axios.get(`${baseUrl}/file/all/${this.props?.typeSelected ?? " "}`, { params: { username: this.state.user.username, page: this.state.page + 2 } })
             .catch(err => console.log(err));
         all = all?.data ?? [];
-        return all;
+        return all.reverse();
     }
 
     renderImagePreview = () => {
@@ -235,7 +233,12 @@ class Quick extends Component {
         var image = this.props.typeSelected === "Images";
         var music = this.props.typeSelected === "Music";
         var len = this.state.files?.length ?? 0
-        if (len === 0) return null;
+        if (this.state.files === null) return null;
+        else if (len === 0 && this.state.files !== null)
+            return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+                <img style={{ objectFit: 'cover', width: '508px', height: '278px' }} src={empty} alt="No file found" />
+                <div style={{ color: 'gray', marginTop: '20px', fontSize: '20px' }}>No results found <span role="img" aria-labelledby="search">🔍</span></div>
+            </div>
         return (
             <SimpleBar style={{ height: "735px", display: 'flex' }} >
                 {this.renderImagePreview()}
