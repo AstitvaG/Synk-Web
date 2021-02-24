@@ -1,9 +1,12 @@
+// import { getFileType } from './common'
+
 var Canvas = require("canvas");
 var assert = require("assert").strict;
 const mm = require('music-metadata-browser');
+var common = require('../utils/common')
 
 // const sharp = require('sharp');
-// const { Buffer } = require('buffer');
+const { Buffer } = require('buffer');
 
 // exports.genImgThumb = async (input) => {
 //     return Buffer.from(await sharp(input)
@@ -12,15 +15,40 @@ const mm = require('music-metadata-browser');
 //         .toBuffer()).toString('base64')
 // }
 
+const convert = (buffer, type = 'image/jpeg') => {
+    return `data:${type};base64,${Buffer.from(buffer).toString('base64')}`;
+}
+
+exports.getThumb = async (file) => {
+    let ftype = common.getFileType(common.fileType(file.name));
+    if (![1, 2, 12].includes(ftype)) return "";
+    let buffer = await new Promise((resolve, reject) => {
+
+        let reader = new FileReader();
+
+        reader.onload = () => {
+            resolve(reader.result);
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+    })
+    if (ftype === 1)
+        return convert(buffer, file.type);
+    else if (ftype === 2)
+        return await this.genPdfThumb(buffer);
+    else if (ftype === 12)
+        return await this.genAudioThumb(buffer);
+}
+
 exports.genAudioThumb = async (buffer) => {
     try {
-        const { common } = await mm.parseFile(buffer);
+        const { common } = await mm.parseBlob(new Blob([buffer]));
         const cover = mm.selectCover(common.picture);
         if (cover == null) return "";
-        return cover.data.toString('base64');
+        return convert(cover.data, cover.format);
     }
-    catch {
-        console.log("Error occured in genAudioThumb")
+    catch (e) {
+        console.log("Error occured in genAudioThumb", e)
         return ""
     }
 }
@@ -54,6 +82,8 @@ NodeCanvasFactory.prototype = {
 };
 
 var pdfjsLib = require("pdfjs-dist/es5/build/pdf.js");
+var pdfjsWorker = require("pdfjs-dist/es5/build/pdf.worker.entry");
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 // Some PDFs need external cmaps.
 var CMAP_URL = "../node_modules/pdfjs-dist/cmaps/";
@@ -70,8 +100,7 @@ exports.genPdfThumb = async (pdfBuffer) => {
         const pdfDocument = await loadingTask.promise;
 
         const page = await pdfDocument.getPage(1);
-        let t = page.getViewport({ scale: 1.0 })
-        var viewport = page.getViewport({ scale: 300 / Math.max(t.height, t.width) });
+        var viewport = page.getViewport({ scale: 1.0 });
         var canvasFactory = new NodeCanvasFactory();
         var canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
         var renderContext = { canvasContext: canvasAndContext.context, viewport, canvasFactory, };
@@ -79,7 +108,7 @@ exports.genPdfThumb = async (pdfBuffer) => {
         var renderTask = page.render(renderContext);
         // console.log("Done page loading")
         await renderTask.promise
-        return canvasAndContext.canvas.toBuffer().toString('base64');
+        return canvasAndContext.canvas.toDataURL('image/png');
     }
     catch (e) {
         console.log("err :", e)

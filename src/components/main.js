@@ -17,6 +17,86 @@ import { toast } from 'react-toastify';
 import Quick, { FilePreview } from './quick';
 import * as Thumb from '../utils/thumb'
 
+class Selected extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            thumb: "",
+            hover: false,
+        };
+    }
+
+
+    componentDidMount = async () => {
+        if (!this.props.file) return;
+        this.setState({ thumb: await Thumb.getThumb(this.props.file) });
+    }
+
+    componentDidUpdate = async (prvProps, prvState) => {
+        if (!this.props.file) return;
+        if (this.props.file.name != prvProps.file.name) {
+            this.setState({ thumb: await Thumb.getThumb(this.props.file) });
+        }
+    }
+
+    renderWithoutThumb(file) {
+        let iconData = renderFileIcon(fileType(file.name).toLowerCase(), -1, true);
+        return (
+            <a onClick={this.props.cb} className={`image-wrapper notrans mx-3`}
+                onMouseEnter={() => this.setState({ hover: true })}
+                onMouseLeave={() => this.setState({ hover: false })}>
+                <div className="image-overlay selected-x">
+                    <div className="video-info">
+                        <div className="video-info-text">
+                            <p className={`video-name tiny`}>{file.name.split('.').slice(0, -1).join('.')}</p>
+                            <p className={`video-subtext tiny`}>{file.size}</p>
+                        </div>
+                    </div>
+                </div>
+                <div style={{ backgroundColor: iconData[0], width: "100%", height: "100%", justifyContent: "center", alignItems: "center", display: "flex" }}>
+                    <i className={`${this.state.hover ? "las la-times" : iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>
+                </div>
+                <span className="video-time">{fileType(file.name).toUpperCase()}</span>
+            </a >
+        )
+    }
+
+    renderWithThumb = (file) => {
+        return (
+            <a onClick={this.props.cb} className={`image-wrapper notrans mx-3`}
+                onMouseEnter={() => this.setState({ hover: true })}
+                onMouseLeave={() => this.setState({ hover: false })}>
+                <div className="image-overlay selected-x">
+                    <div className="video-info">
+                        <div className="video-info-text">
+                            <p className={`video-name tiny`}>{file.name.split('.').slice(0, -1).join('.')}</p>
+                            <p className={`video-subtext tiny`}>{file.size}</p>
+                        </div>
+                    </div>
+                </div>
+                <img src={this.state.thumb} alt={file.name} onError={_ => this.setState({ exists: false })} />
+
+                {this.state.hover && <div style={{ position: "absolute", width: "100%", height: "100%", justifyContent: "center", alignItems: "center", display: "flex", flexDirection: "column", pointerEvents: "none" }}>
+                    <i className="las la-times" style={{ fontSize: (100 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>
+                    <p className={`video-subtext medium`} style={{ color: "white", zIndex: 2 }}>Remove File</p>
+                </div>}
+                <span className="video-time">{fileType(file.name).toUpperCase()}</span>
+            </a >
+        )
+    }
+
+    render() {
+        let { file } = this.props
+        if (file === undefined) return null;
+        if (this.state.thumb !== "")
+            return this.renderWithThumb(file);
+        else
+            return this.renderWithoutThumb(file);
+    }
+}
+
+
+
 export default class Main extends Component {
 
     constructor(props) {
@@ -238,39 +318,20 @@ export default class Main extends Component {
             >
                 {this.state.drag > 0 && <div className="drop-message">Drop files here</div>}
                 {this.state.selectedFiles.length > 0 && <p className="upload-message">Files Selected</p>}
-                {this.state.selectedFiles.length > 0 && <p className="upload-message" style={{ fontSize: "20px", marginTop: "-10px" }}>{this.state.selectedFiles.length} file{this.state.selectedFiles.length === 1 ? "" : 's'} selected</p>}
+                {this.state.selectedFiles.length > 0 && <p className="upload-message" style={{ fontSize: "20px", marginTop: "-20px" }}>{this.state.selectedFiles.length} file{this.state.selectedFiles.length === 1 ? "" : 's'} selected</p>}
                 {this.state.selectedFiles.length > 0 && <div style={{ flexDirection: 'row', marginBottom: "30px" }}>
-                    <button style={{ height: "40px", width: "100px", borderRadius: "10px", border: 'none', backgroundColor: '#ffdbcc', marginLeft: '10px', marginRight: '10px', color: '#755550' }} onClick={() => this.setState({ selectedFiles: [] })}>Remove All</button>
-                    <button style={{ height: "40px", width: "100px", borderRadius: "10px", border: 'none', backgroundColor: '#3275f7', marginLeft: '10px', marginRight: '10px', color: '#FFFFFF' }} onClick={() => this.inputRef.current.click()}>Add More</button>
+                    <button className="action-btn" style={{ backgroundColor: '#DDDDDD', color: '#555555' }} onClick={() => this.setState({ selectedFiles: [] })}>Remove All <i class="las la-minus-circle"></i></button>
+                    <button className="action-btn" style={{ backgroundColor: '#3275f7', color: '#FFFFFF' }} onClick={() => this.inputRef.current.click()}>Add More <i class="las la-plus-circle"></i></button>
                 </div>}
-                {/* <div className="file-display-container"> */}
                 <SimpleBar className="file-display-container">
-
-                    {
-                        this.state.selectedFiles.map((data, i) =>
-                            <div key={i} className="file-selected unselectable" style={{ cursor: "pointer", background: "white" }}
-                                onMouseEnter={() => this.setState({ closeIcon: i })}
-                                onMouseLeave={() => this.setState({ closeIcon: -1 })}
-                                onClick={() => this.removeFile(data.name)}>
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <div className="d-flex justify-content-between align-items-center">
-                                        {this.state.closeIcon != i
-                                            ? renderFileIcon(fileType(data.name), 50)
-                                            : renderFileIcon("close-icon", 50)
-                                        }
-                                        <div className="mb-3 mb-sm-0 ml-3">
-                                            <p className="font-weight-bold mb-0 text-truncate"
-                                                style={{ maxWidth: "240px" }}>{data.name}</p>
-                                            <small className="text-secondary text-truncate">{fileType(data.name).toUpperCase() || "Executable"} file</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <p className="float-right"><font size="+2">{this.fileSize(data.size).split(' ')[0]} </font>{this.fileSize(data.size).split(' ')[1]}</p>
-                            </div>
-                        )
-                    }
+                    <div className="section-part pb-2">
+                        {
+                            this.state.selectedFiles.map((data, i) =>
+                                <Selected key={i} index={i} file={data} cb={() => this.removeFile(data.name)} />
+                            )
+                        }
+                    </div>
                 </SimpleBar>
-                {/* </div> */}
                 {this.state.selectedFiles.length >= 0 && <div className="section-header-wrapper mt-3">
                     <h1 className="section-header">Select Device</h1>
                     {this.state.deviceList.length > 6 && <a className="section-header-link">
@@ -757,7 +818,6 @@ export default class Main extends Component {
                 }
             })
                 .then((res) => {
-                    console.log(res.data)
                     let { uploadArray } = this.state
                     uploadArray[i].done = 100
                     uploadArray[i] = Object.assign(uploadArray[i], res.data);
