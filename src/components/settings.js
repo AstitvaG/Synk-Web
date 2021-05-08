@@ -36,7 +36,7 @@ export default function SettingsModal(props) {
                 <p className="my-0" style={{color: '#555555'}}>Username</p>
                 <h5><b>{props.user.username}</b></h5>
                 <p className="my-0" style={{color: '#555555'}}>Email</p>
-                <h5><b>{props.user.email}</b>{"  "}{props.user.verified && <i style={{ color: 'blue' }} class="las la-check-circle" />}</h5>
+                <h5><b>{props.user.email}</b>{"  "}{props.user.verified && <i style={{ color: 'blue' }} className="las la-check-circle" />}</h5>
                 <hr />
                 <h4>Device Settings</h4>
                 {andr.length > 0 && <div>

@@ -15,85 +15,7 @@ import 'simplebar/dist/simplebar.min.css';
 import ReactTooltip from 'react-tooltip';
 import { toast } from 'react-toastify';
 import Quick, { FilePreview } from './quick';
-import * as Thumb from '../utils/thumb'
-
-class Selected extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            thumb: "",
-            hover: false,
-        };
-    }
-
-
-    componentDidMount = async () => {
-        if (!this.props.file) return;
-        this.setState({ thumb: await Thumb.getThumb(this.props.file) });
-    }
-
-    componentDidUpdate = async (prvProps, prvState) => {
-        if (!this.props.file) return;
-        if (this.props.file.name != prvProps.file.name) {
-            this.setState({ thumb: await Thumb.getThumb(this.props.file) });
-        }
-    }
-
-    renderWithoutThumb(file) {
-        let iconData = renderFileIcon(fileType(file.name).toLowerCase(), -1, true);
-        return (
-            <a onClick={this.props.cb} className={`image-wrapper notrans mx-3`}
-                onMouseEnter={() => this.setState({ hover: true })}
-                onMouseLeave={() => this.setState({ hover: false })}>
-                <div className="image-overlay selected-x">
-                    <div className="video-info">
-                        <div className="video-info-text">
-                            <p className={`video-name tiny`}>{file.name.split('.').slice(0, -1).join('.')}</p>
-                            <p className={`video-subtext tiny`}>{file.size}</p>
-                        </div>
-                    </div>
-                </div>
-                <div style={{ backgroundColor: iconData[0], width: "100%", height: "100%", justifyContent: "center", alignItems: "center", display: "flex" }}>
-                    <i className={`${this.state.hover ? "las la-times" : iconData[1]} image-icon`} style={{ fontSize: (150 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>
-                </div>
-                <span className="video-time">{fileType(file.name).toUpperCase()}</span>
-            </a >
-        )
-    }
-
-    renderWithThumb = (file) => {
-        return (
-            <a onClick={this.props.cb} className={`image-wrapper notrans mx-3`}
-                onMouseEnter={() => this.setState({ hover: true })}
-                onMouseLeave={() => this.setState({ hover: false })}>
-                <div className="image-overlay selected-x">
-                    <div className="video-info">
-                        <div className="video-info-text">
-                            <p className={`video-name tiny`}>{file.name.split('.').slice(0, -1).join('.')}</p>
-                            <p className={`video-subtext tiny`}>{file.size}</p>
-                        </div>
-                    </div>
-                </div>
-                <img src={this.state.thumb} alt={file.name} onError={_ => this.setState({ exists: false })} />
-
-                {this.state.hover && <div style={{ position: "absolute", width: "100%", height: "100%", justifyContent: "center", alignItems: "center", display: "flex", flexDirection: "column", pointerEvents: "none" }}>
-                    <i className="las la-times" style={{ fontSize: (100 * 1.33 / 40) + "em", color: "white", zIndex: 2 }}></i>
-                    <p className={`video-subtext medium`} style={{ color: "white", zIndex: 2 }}>Remove File</p>
-                </div>}
-                <span className="video-time">{fileType(file.name).toUpperCase()}</span>
-            </a >
-        )
-    }
-
-    render() {
-        let { file } = this.props
-        if (file === undefined) return null;
-        if (this.state.thumb !== "")
-            return this.renderWithThumb(file);
-        else
-            return this.renderWithoutThumb(file);
-    }
-}
+import Selected from './selected'
 
 
 
@@ -192,6 +114,7 @@ export default class Main extends Component {
         await Notification.requestPermission().then(() => {
             return messaging.getToken()
         }).then(token => {
+            console.log(token)
             this.setState({ myToken: token })
             axios.post(`${baseUrl}/device/add`, {
                 username: this.state.user.username,
@@ -351,7 +274,7 @@ export default class Main extends Component {
                         )
                     }
                 </div>}
-                {this.state.selectedFiles.length > 0 &&
+                {this.state.selectedFiles.length > 0 && (this.state.deviceList?.length ?? 0) != 0 &&
                     <button className="btnx mt-4 mx-auto d-block" onClick={() => { this.uploadFiles() }}>
                         <span className="circle">
                             <span className="icon arrow"></span>
@@ -707,9 +630,19 @@ export default class Main extends Component {
     }
 
     onLogout = () => {
-        removeUserSession();
-        toast.dark('👋 Logged out!');
-        this.props.history.push('/enter');
+        axios.post(`${baseUrl}/device/delete`, { username: this.state.user.username, unique: this.state.myToken })
+            .then((res) => {
+                removeUserSession();
+                console.log(res.data);
+                toast.dark('👋 Logged out!');
+                this.props.history.push('/enter');
+            })
+            .catch(err => {
+                console.log(err)
+                removeUserSession();
+                toast.dark('👋 Logged out!');
+                this.props.history.push('/enter');
+            })
     }
 
     preventDefault = (e) => {
@@ -795,6 +728,7 @@ export default class Main extends Component {
         let tempArray = this.state.selectedFiles
         this.setState({ selectedFiles: [] })
         for (let i in tempArray) {
+            console.log("FIle", tempArray[i])
             tempArray[i].done = 0
             tempArray[i].recieverName = this.state.deviceSected.name
             // tempArray[i].originalName = tempArray[i].name
@@ -809,7 +743,7 @@ export default class Main extends Component {
             formData.append('token', this.state.deviceSected.token);
             formData.append('title', 'Recieved a file from Synk Web')
             formData.append('body', `${tempArray[i].name.trim(0, 11)},  Size: ${this.fileSize(tempArray[i].size)}`)
-            formData.append('content', JSON.stringify({ senderName: 'Website', caption: 'Caption', username: this.state.user.username, recieverName: this.state.recieverName }))
+            // formData.append('content', JSON.stringify({ senderName: 'Website', caption: 'Caption', username: this.state.user.username, recieverName: tempArray[i].recieverName, originalName : tempArray[i].name, type: tempArray[i].type }))
             axios.post(`${baseUrl}/file/`, formData, {
                 onUploadProgress: (e) => {
                     const percent = Math.floor((e.loaded / e.total) * 100);
