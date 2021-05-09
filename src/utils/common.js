@@ -99,7 +99,7 @@ export const renderFileIcon = (ext, size = 40, justData = false) => {
             col = '#1DB954', ico = "lar la-file-audio"
             break
         case 13:
-            col = '#0078D7', ico = "lab la-windows"
+            col = '#0078D7', ico = "fab fa-windows"
             break
         case 14:
             col = '#dd4814', ico = "lab la-ubuntu"

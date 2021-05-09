@@ -189,7 +189,7 @@ class Quick extends Component {
         all = await axios.get(`${baseUrl}/file/all/${this.props?.typeSelected ?? " "}`, { params: { username: this.state.user.username, page: this.state.page + 2 } })
             .catch(err => console.log(err));
         all = all?.data ?? [];
-        return all.reverse();
+        return all;
     }
 
     renderImagePreview = () => {

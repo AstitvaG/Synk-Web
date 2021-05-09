@@ -1,10 +1,25 @@
 import React, { Component } from 'react';
+import QRCode from 'qrcode.react';
+
 import axios from 'axios';
 import './enter.css';
 import { baseUrl, setUserSession } from '../utils/common';
 import { toast } from 'react-toastify';
 import ReactTooltip from 'react-tooltip';
 import ClipLoader from "react-spinners/ClipLoader";
+import socketIOClient from "socket.io-client";
+const socket = socketIOClient('http://localhost:7000/');
+socket.request = function request(type, data = {}) {
+    return new Promise((resolve, reject) => {
+        socket.emit(type, data, (data) => {
+            if (data.error) {
+                reject(data.error)
+            } else {
+                resolve(data)
+            }
+        })
+    })
+}
 /* eslint-disable jsx-a11y/anchor-is-valid */
 
 export default class Enter extends Component {
@@ -19,8 +34,35 @@ export default class Enter extends Component {
             nameError: 'Name must be longer than 3 characters',
             emailError: 'Email must be of valid type',
             passError: 'Minimum eight characters are required, at least one letter and one number',
+            authCode: ''
         }
     }
+
+    authCodeInterval = null;
+
+    componentDidMount = async () => {
+        let authCode = await socket.request('newAuthQR')
+        this.setState({ authCode });
+        console.log(authCode)
+        this.authCodeInterval = setInterval(async () => {
+            let authCode = await socket.request('newAuthQR')
+            this.setState({ authCode });
+            console.log(authCode)
+        }, 20000)
+        socket.on('verifiedAuth', (data) => {
+            toast.dark('✌️ Logged in Successfully!');
+            clearInterval(this.authCodeInterval);
+            socket.disconnect();
+            setUserSession(data.token, data.user)
+            this.props.history.push('/')
+        })
+    };
+
+    componentWillUnmount = () => {
+        clearInterval(this.authCodeInterval);
+        socket.disconnect();
+    }
+
 
     onChangeUsername = (event, check = true) => {
         this.setState({ username: event.target.value });
@@ -194,6 +236,16 @@ export default class Enter extends Component {
                                         : <ClipLoader size={15} color="white" />
                                     }
                                 </button>
+                                <div className='title-tag'>or</div>
+                                <div className='scanCode'>
+                                    <div>
+                                        <div style={{ color: '#888' }}>Scan this</div>
+                                        <div style={{ color: '#888' }}>code from</div>
+                                        <div style={{ color: '#6692a3', fontWeight: 'bold' }}>Synk Mobile App</div>
+                                    </div>
+                                    <br />
+                                    {this.state.authCode !== "" && <QRCode value={this.state.authCode} bgColor="#d9f1fa" fgColor="#152b33" />}
+                                </div>
                             </form>
                         </div>
                     </div>

@@ -36,7 +36,7 @@ export default class Selected extends Component {
                     <div className="video-info">
                         <div className="video-info-text">
                             <p className={`video-name tiny`}>{file.name.split('.').slice(0, -1).join('.')}</p>
-                            <p className={`video-subtext tiny`}>{file.size}</p>
+                            <p className={`video-subtext tiny`}>{this.fileSize(file.size)}</p>
                         </div>
                     </div>
                 </div>
@@ -57,7 +57,7 @@ export default class Selected extends Component {
                     <div className="video-info">
                         <div className="video-info-text">
                             <p className={`video-name tiny`}>{file.name.split('.').slice(0, -1).join('.')}</p>
-                            <p className={`video-subtext tiny`}>{file.size}</p>
+                            <p className={`video-subtext tiny`}>{this.fileSize(file.size)}</p>
                         </div>
                     </div>
                 </div>
@@ -70,6 +70,16 @@ export default class Selected extends Component {
                 <span className="video-time">{fileType(file.name).toUpperCase()}</span>
             </a >
         )
+    }
+
+    fileSize = (size) => {
+        if (size === 0) {
+            return '0 B';
+        }
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(size) / Math.log(k));
+        return parseFloat((size / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
     render() {

@@ -207,7 +207,7 @@
 	background-color: #fff;
 	border: 1px solid #eee;
 	overflow: hidden;
-	margin-top: 50px;
+	margin-top: 10px;
 	opacity: 1;
 	visibility: visible;
 	-webkit-transition: all 0.3s ease;
@@ -321,6 +321,23 @@
 	opacity: 0;
 	width: 0;
 	height: 0;
+}
+
+.scanCode {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8%;
+	border-radius: 20px;
+	background: #ddf1f8;
+}
+
+.title-tag {
+	font-size: 2em;
+	text-align: center;
+	margin-top: -10%;
+	margin-bottom: 2%;
+	color: black;
 }
 
 .slider {

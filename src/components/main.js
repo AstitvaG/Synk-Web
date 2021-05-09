@@ -105,6 +105,10 @@ export default class Main extends Component {
         var tab = (url.searchParams.get("tab") || "").toLowerCase();
         if (tab != null && ['images', 'music', 'videos', 'docs', 'apps', 'compressed', 'texts'].includes(tab))
             this.setState({ activeTab: 2, tabType: this.handleCase(tab) })
+        else if(tab === "text") this.setState({activeTab: 3});
+        else if(tab==="vault") this.setState({activeTab: 4})
+        else window.history.pushState('page2', 'Title', '/');
+
     }
 
     registerPushMessaging = async () => {
@@ -303,7 +307,7 @@ export default class Main extends Component {
                     onHide={() => this.setState({ settingsModal: false })}
                 />
                 <div className="app-name">Synk</div>
-                <a className={`item-link ${this.state.activeTab <= 2 && !isSendingfile ? 'active' : ''}`} id="pageLink" data-tip="Home" onClick={(e) => { this.setState({ activeTab: 1 }) }}>
+                <a className={`item-link ${this.state.activeTab <= 2 && !isSendingfile ? 'active' : ''}`} id="pageLink" data-tip="Home" onClick={(e) => { this.setState({ activeTab: 1, tabType: '' }); window.history.pushState('page2', 'Title', '/'); }}>
                     {this.state.tabType == '' ? <svg
                         xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" className="feather feather-grid" viewBox="0 0 24 24">
                         <defs />
@@ -317,10 +321,13 @@ export default class Main extends Component {
                 <a className={`item-link ${isSendingfile ? 'active' : ''}`} data-tip="Add file(s)" id="pageLink" onClick={(e) => { this.inputRef.current.click() }}>
                     <i className="las la-plus la-2x" />
                 </a>
-                <a className={`item-link ${this.state.activeTab === 3 && !isSendingfile ? 'active' : ''}`} data-tip="Send Text" id="pageLink" onClick={(e) => { this.setState({ activeTab: 3 }) }}>
+                <a className={`item-link ${this.state.activeTab === 3 && !isSendingfile ? 'active' : ''}`} data-tip="Send Text" id="pageLink" onClick={(e) => { this.setState({ activeTab: 3, tabType: '' }); window.history.pushState('vault', 'Title', '/?tab=text'); }}>
                     <i className="las la-quote-right la-2x"></i>
                 </a>
-                <a className="item-link" data-tip="Settings" onClick={() => this.setState({ settingsModal: true })} id="pageLink">
+                <a className={`item-link ${this.state.activeTab === 4 && !isSendingfile ? 'active' : ''}`} data-tip="Vault" id="pageLink" onClick={(e) => { this.setState({ activeTab: 4, tabType: '' }); window.history.pushState('vault', 'Title', '/?tab=vault'); }}>
+                    <i className="las la-door-open la-2x"></i>
+                </a>
+                <a className="item-link btn-settings" data-tip="Settings" onClick={() => this.setState({ settingsModal: true })} id="pageLink">
                     <i className="las la-cog la-2x"></i>
                 </a>
                 <a className="btn-logout" data-tip="Logout" onClick={this.onLogout}>
@@ -436,7 +443,7 @@ export default class Main extends Component {
                             body: text,
                             content: JSON.stringify({ caption: text }),
                         })
-                            .then(() => toast.dark('🙌 Message sent!'))
+                            .then(() => { toast.dark('🙌 Message sent!'); this.sendTexRef.value = ""; })
                             .catch((err) => {
                                 toast.dark('❗ Message could not be sent! :' + err)
                             })
